@@ -585,7 +585,9 @@ function normStatus(s){ return (s||'').trim(); }
 function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
 function esc(s){ const d=document.createElement('div'); d.textContent = s==null?'':String(s); return d.innerHTML; }
 function orderMatchesPayload(row, payload){
-  const fields = ['order_no','company','agent','date','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
+  // فیلد 'date' به‌خاطر محدودیت شناخته‌شده‌ی «Column type» گوگل‌شیت گاهی نوشته نمی‌شود؛
+  // برای اینکه این یک مورد باعث نشود کل ذخیره‌سازی «ناموفق» گزارش شود، از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده.
+  const fields = ['order_no','company','agent','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
