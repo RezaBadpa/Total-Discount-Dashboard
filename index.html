@@ -460,11 +460,11 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div class="field"><label>نام نماینده</label>
           <select id="f_agent"></select>
         </div>
-        <div class="field"><label>تاریخ (فعلاً فقط نمایشی — قابل ویرایش نیست)</label><input id="f_date" placeholder="M/D/1405" disabled style="opacity:.6;cursor:not-allowed;"></div>
+        <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
         <div class="field"><label>شیفت صدور الحاقیه</label>
           <select id="f_shift"><option value="صبح">☀️ صبح</option><option value="عصر">🌙 عصر</option></select>
         </div>
-        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="number"></div>
+        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this)"></div>
         <div class="field"><label>وضعیت سفارش</label>
           <select id="f_status"><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
         </div>
@@ -584,10 +584,13 @@ const GS_TOKEN = 'Azki-Mali';
 function normStatus(s){ return (s||'').trim(); }
 function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
 function esc(s){ const d=document.createElement('div'); d.textContent = s==null?'':String(s); return d.innerHTML; }
+function formatAmountInput(el){
+  let raw = el.value.replace(/[^\d]/g, '');
+  if(!raw){ el.value = ''; return; }
+  el.value = Number(raw).toLocaleString('en-US');
+}
 function orderMatchesPayload(row, payload){
-  // فیلد 'date' به‌خاطر محدودیت شناخته‌شده‌ی «Column type» گوگل‌شیت گاهی نوشته نمی‌شود؛
-  // برای اینکه این یک مورد باعث نشود کل ذخیره‌سازی «ناموفق» گزارش شود، از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده.
-  const fields = ['order_no','company','agent','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
+  const fields = ['order_no','company','agent','date','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
@@ -733,14 +736,17 @@ function openLog(){
   if(!auditLog.length){
     body.innerHTML = '<div class="empty-log">هنوز تغییری ثبت نشده است.</div>';
   } else {
-    body.innerHTML = auditLog.map(l=>`
+    body.innerHTML = auditLog.map(l=>{
+      const when = (l.date && l.time) ? `${l.date} - ${l.time}` : timeAgo(l.ts);
+      return `
       <div class="log-item ${l.action}">
         <div class="log-dot"></div>
         <div>
           <div class="log-text">${esc(l.text)}</div>
-          <div class="log-meta">${esc(l.user)} · ${timeAgo(l.ts)}</div>
+          <div class="log-meta">${esc(l.user)} · ${esc(when)}</div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
   document.getElementById('logModalOverlay').classList.add('show');
 }
@@ -1085,7 +1091,7 @@ function openEditModal(id){
   document.getElementById('f_agent').value = o.agent||'';
   document.getElementById('f_date').value = o.date||'';
   document.getElementById('f_shift').value = o.shift||'صبح';
-  document.getElementById('f_amount').value = o.amount||0;
+  document.getElementById('f_amount').value = o.amount ? Number(o.amount).toLocaleString('en-US') : '';
   document.getElementById('f_status').value = normStatus(o.status)||'در انتظار تخفیف';
   document.getElementById('f_email_status').value = o.email_status || 'ارسال شد - در حال بررسی';
   document.getElementById('f_supervisor').value = o.supervisor_approval||'عدم تایید';
@@ -1108,7 +1114,7 @@ async function saveRow(){
     seller_result: document.getElementById('f_seller_result').value.trim(),
     issuance_result: document.getElementById('f_issuance_result').value.trim(),
     packagei: document.getElementById('f_packagei').value.trim(),
-    amount: Number(document.getElementById('f_amount').value)||0,
+    amount: Number(document.getElementById('f_amount').value.replace(/,/g,''))||0,
     shift: document.getElementById('f_shift').value,
     email_status: document.getElementById('f_email_status').value.trim(),
     supervisor_approval: document.getElementById('f_supervisor').value,
