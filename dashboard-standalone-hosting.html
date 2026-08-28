@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>داشبورد مغایرت سفارشات ازکی سلر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#080b10;
+  --bg-grid: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 1px);
+  --card:#0d131b;
+  --card2:#10171f;
+  --border:#1b2530;
+  --border-soft:#141c25;
+  --text:#e7edf3;
+  --muted:#7c8a9a;
+  --muted2:#546272;
+  --green:#22e6ae;
+  --green-dim:rgba(34,230,174,0.12);
+  --blue:#3ab7ff;
+  --blue-dim:rgba(58,183,255,0.12);
+  --orange:#ffb648;
+  --orange-dim:rgba(255,182,72,0.12);
+  --pink:#ff5c93;
+  --pink-dim:rgba(255,92,147,0.12);
+  --purple:#a06bff;
+  --yellow:#ffd23f;
+  --red:#ff5c5c;
+  --radius:16px;
+  --shadow: 0 8px 30px rgba(0,0,0,0.35);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(34,230,174,0.09), transparent 60%),
+    radial-gradient(900px 500px at 10% 0%, rgba(58,183,255,0.07), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Vazirmatn', sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:22px 22px 60px;}
+
+/* ---------- Gate ---------- */
+#gate{
+  position:fixed;inset:0;z-index:999;
+  background:radial-gradient(1200px 600px at 50% 0%, rgba(34,230,174,0.10), transparent 60%), #060a0e;
+  display:flex;align-items:center;justify-content:center;
+}
+.gate-card{
+  width:min(420px,92vw);
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:32px 28px;
+  box-shadow:var(--shadow);
+  text-align:center;
+}
+.gate-icon{
+  width:56px;height:56px;border-radius:14px;margin:0 auto 16px;
+  background:var(--green-dim);border:1px solid rgba(34,230,174,0.35);
+  display:flex;align-items:center;justify-content:center;color:var(--green);
+}
+.gate-card h2{margin:0 0 6px;font-size:19px;}
+.gate-card p{margin:0 0 20px;color:var(--muted);font-size:13px;line-height:1.9;}
+.gate-card input{
+  width:100%;background:#0a0f15;border:1px solid var(--border);color:var(--text);
+  padding:12px 14px;border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:10px;outline:none;
+}
+.gate-card input:focus{border-color:var(--green);}
+.gate-card .err{color:var(--red);font-size:12.5px;min-height:18px;margin-bottom:6px;}
+.gate-btn{
+  width:100%;padding:12px;border:none;border-radius:10px;cursor:pointer;
+  background:linear-gradient(135deg,var(--green),#17c495);color:#04140f;font-weight:700;font-size:14px;font-family:inherit;
+}
+.gate-note{margin-top:14px;font-size:11px;color:var(--muted2);line-height:1.8;}
+
+/* ---------- Header ---------- */
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--card2);border:1px solid var(--border);
+  padding:7px 14px;border-radius:999px;font-size:12.5px;color:var(--muted);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.8s infinite;}
+.dot.off{background:var(--red);box-shadow:0 0 8px var(--red);animation:none;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+.status-row{display:flex;gap:10px;flex-wrap:wrap;}
+.status-row .badge b{color:var(--text);font-weight:600;}
+
+.hero{margin:18px 0 26px;}
+.eyebrow{color:var(--green);font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.eyebrow .sq{width:8px;height:8px;background:var(--green);border-radius:2px;box-shadow:0 0 10px var(--green);}
+h1.title{font-size:clamp(26px,4vw,42px);margin:0 0 10px;font-weight:800;line-height:1.35;}
+h1.title .hl{color:var(--green);}
+.subtitle{color:var(--muted);font-size:15px;max-width:820px;line-height:2;margin:0 0 16px;}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.icon-btn{
+  width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:var(--card2);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;transition:.15s;
+}
+.icon-btn:hover{color:var(--text);border-color:var(--green);}
+
+/* ---------- Stat cards ---------- */
+.stats-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;
+}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:640px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;position:relative;overflow:hidden;
+}
+.stat-card::after{
+  content:'';position:absolute;inset:0;opacity:0;transition:.2s;
+  background:radial-gradient(160px 100px at 100% 0%, currentColor, transparent 70%);
+}
+.stat-card:hover::after{opacity:.06;}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.stat-ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.stat-label{color:var(--muted);font-size:12.5px;}
+.stat-value{font-size:26px;font-weight:800;margin:2px 0 4px;}
+.stat-sub{font-size:11.5px;color:var(--muted2);}
+.c-green{color:var(--green);}.bg-green{background:var(--green-dim);}
+.c-blue{color:var(--blue);}.bg-blue{background:var(--blue-dim);}
+.c-orange{color:var(--orange);}.bg-orange{background:var(--orange-dim);}
+.c-pink{color:var(--pink);}.bg-pink{background:var(--pink-dim);}
+.c-purple{color:var(--purple);}.bg-purple{background:rgba(160,107,255,0.12);}
+
+/* ---------- Panels ---------- */
+.panel{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;margin-bottom:16px;
+}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.panel-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;}
+.panel-title .pic{width:30px;height:30px;border-radius:9px;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;}
+.panel-sub{color:var(--muted2);font-size:12px;margin-top:2px;}
+
+/* composition bar */
+.comp-total{color:var(--muted);font-size:13px;margin-bottom:14px;}
+.comp-total b{color:var(--text);}
+.comp-bar{display:flex;height:14px;border-radius:8px;overflow:hidden;background:#111;}
+.comp-bar div{height:100%;}
+.comp-legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px;font-size:13px;}
+.comp-legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted);}
+.comp-legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+.comp-legend b{color:var(--text);}
+
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:980px){.charts-grid{grid-template-columns:1fr;}}
+.chart-box{height:280px;position:relative;}
+.chart-box.tall{height:320px;}
+
+/* ---------- Search ---------- */
+.search-wrap{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.search-input-box{flex:1;min-width:220px;position:relative;}
+.search-input-box svg{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted2);}
+.search-input-box input{
+  width:100%;background:#0a0f15;border:1px solid var(--border);color:var(--text);
+  padding:11px 42px 11px 14px;border-radius:10px;font-family:inherit;font-size:13.5px;outline:none;
+}
+.search-input-box input:focus{border-color:var(--green);}
+select.filter-sel{
+  background:#0a0f15;border:1px solid var(--border);color:var(--text);
+  padding:11px 12px;border-radius:10px;font-family:inherit;font-size:13px;outline:none;cursor:pointer;min-width:130px;
+}
+.clear-btn{
+  background:var(--card2);border:1px solid var(--border);color:var(--muted);
+  padding:11px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap;
+}
+.clear-btn:hover{color:var(--text);border-color:var(--pink);}
+.result-count{color:var(--muted2);font-size:12px;margin-top:10px;}
+
+/* ---------- Table toolbar ---------- */
+.table-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid var(--border);
+  cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;background:var(--card2);color:var(--text);transition:.15s;
+}
+.btn:hover{border-color:var(--green);}
+.btn.primary{background:linear-gradient(135deg,var(--green),#17c495);color:#04140f;border:none;}
+.btn.primary:hover{filter:brightness(1.08);}
+.btn.ghost{background:transparent;}
+.btn svg{flex-shrink:0;}
+
+/* ---------- Table ---------- */
+.table-scroll{overflow-x:auto;border:1px solid var(--border-soft);border-radius:12px;}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px;}
+thead th{
+  background:#0a0f15;color:var(--muted);font-weight:600;text-align:right;padding:12px 14px;
+  border-bottom:1px solid var(--border);white-space:nowrap;font-size:12px;
+}
+tbody td{padding:13px 14px;border-bottom:1px solid var(--border-soft);vertical-align:middle;color:var(--text);}
+tbody tr{transition:.12s;}
+tbody tr:hover{background:rgba(255,255,255,0.02);}
+tbody tr.expanded-row td{border-bottom:none;}
+.desc-row td{background:#0a0f15;padding:0;}
+.desc-row .desc-inner{padding:16px 22px;color:var(--muted);font-size:13px;line-height:2;display:none;border-bottom:1px solid var(--border-soft);}
+.desc-row.open .desc-inner{display:block;}
+.desc-inner h4{margin:0 0 6px;color:var(--text);font-size:12.5px;}
+.desc-inner .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;}
+.mono{font-family:ui-monospace,monospace;color:var(--muted);}
+.pill{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;display:inline-block;}
+.pill.paid{background:var(--blue-dim);color:var(--blue);}
+.pill.discounted{background:var(--green-dim);color:var(--green);}
+.pill.wait-discount{background:var(--orange-dim);color:var(--orange);}
+.pill.wait-pay{background:var(--pink-dim);color:var(--pink);}
+.shift-ic{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px;}
+.shift-ic.sun{color:var(--yellow);}
+.shift-ic.moon{color:var(--blue);}
+.row-actions{display:flex;gap:6px;}
+.row-actions button{
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--card2);
+  color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.row-actions button:hover{color:var(--text);}
+.row-actions .del:hover{color:var(--red);border-color:var(--red);}
+.row-actions .edit:hover{color:var(--blue);border-color:var(--blue);}
+.row-actions .info:hover{color:var(--green);border-color:var(--green);}
+.desc-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,230,174,0.3);padding:6px 12px;border-radius:999px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;}
+.desc-toggle-btn:hover{background:rgba(34,230,174,0.22);}
+.desc-toggle-btn .chev{transition:transform .2s;}
+.desc-toggle-btn.open .chev{transform:rotate(180deg);}
+.desc-toggle-btn.open{background:rgba(34,230,174,0.22);}
+.amount-cell{font-weight:700;font-variant-numeric:tabular-nums;}
+
+.pagination{display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;}
+.pagination .info{color:var(--muted2);font-size:12.5px;}
+.page-btns{display:flex;gap:6px;align-items:center;}
+.page-btns button{
+  min-width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--card2);color:var(--muted);
+  cursor:pointer;font-family:inherit;font-size:13px;
+}
+.page-btns button.active{background:var(--green);color:#04140f;border-color:var(--green);font-weight:700;}
+.page-btns button:disabled{opacity:.35;cursor:not-allowed;}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(3,5,8,0.72);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;z-index:500;padding:20px;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:18px;width:min(640px,100%);
+  max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);
+}
+.modal.small{width:min(380px,100%);}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border);}
+.modal-head h3{margin:0;font-size:16px;}
+.modal-head button{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;}
+.modal-body{padding:20px 22px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid .full{grid-column:1/-1;}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;}
+.field input,.field select,.field textarea{
+  width:100%;background:#0a0f15;border:1px solid var(--border);color:var(--text);
+  padding:10px 12px;border-radius:9px;font-family:inherit;font-size:13.5px;outline:none;
+}
+.field textarea{resize:vertical;min-height:70px;line-height:1.8;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--border);}
+.warn-icon{width:52px;height:52px;border-radius:14px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.confirm-text{text-align:center;color:var(--muted);font-size:13.5px;line-height:1.9;margin-bottom:4px;}
+.confirm-text b{color:var(--text);}
+
+/* audit log */
+.log-item{padding:12px 0;border-bottom:1px solid var(--border-soft);display:flex;gap:12px;align-items:flex-start;}
+.log-item:last-child{border-bottom:none;}
+.log-dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:6px;flex-shrink:0;}
+.log-item.del .log-dot{background:var(--red);}
+.log-item.edit .log-dot{background:var(--blue);}
+.log-item .log-text{font-size:13px;line-height:1.8;}
+.log-item .log-meta{font-size:11.5px;color:var(--muted2);margin-top:2px;}
+.empty-log{color:var(--muted2);text-align:center;padding:30px 0;font-size:13px;}
+
+.toast-wrap{position:fixed;bottom:22px;left:22px;z-index:800;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  background:var(--card);border:1px solid var(--green);color:var(--text);padding:12px 18px;border-radius:10px;
+  font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;animation:slidein .2s;
+}
+@keyframes slidein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-soft);}
+.settings-row:last-child{border-bottom:none;}
+.settings-row .lbl{font-size:13.5px;}
+.settings-row .desc{font-size:11.5px;color:var(--muted2);margin-top:3px;}
+.toggle{width:44px;height:24px;border-radius:999px;background:#1b2530;position:relative;cursor:pointer;border:1px solid var(--border);flex-shrink:0;}
+.toggle.on{background:var(--green);}
+.toggle .knob{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;right:2px;transition:.2s;}
+.toggle.on .knob{right:22px;}
+.sheet-link{font-size:12px;color:var(--blue);word-break:break-all;}
+footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26px;line-height:2;}
+</style>
+</head>
+<body>
+
+<!-- ================= GATE ================= -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2>ورود به داشبورد</h2>
+    <p>این داشبورد محدود به اعضای تیم است. لطفاً نام خودتان و رمز دسترسی تیم را وارد کنید تا واردشوید و تغییرات شما با نامتان ثبت شود.</p>
+    <input id="gateName" placeholder="نام شما (برای ثبت در لاگ تغییرات)" />
+    <input id="gatePass" type="password" placeholder="رمز دسترسی تیم" />
+    <div class="err" id="gateErr"></div>
+    <button class="gate-btn" onclick="tryEnter()">ورود به داشبورد</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" style="display:none;">
+
+  <div class="header-top">
+    <span class="badge"><span class="dot"></span> داشبورد تحلیلی • اتصال به دیتابیس زنده داشبورد</span>
+    <div class="status-row">
+      <span class="badge" id="lastUpdateBadge">آخرین تغییرات: <b>زنده</b></span>
+      <span class="badge" id="sheetBadge"><span class="dot" id="sheetDot"></span> بک‌آپ گوگل‌شیت: <b id="sheetStatusTxt">فعال</b></span>
+      <span class="badge" style="cursor:pointer" onclick="openLog()">👤 <b id="whoAmI">کاربر</b></span>
+      <button class="icon-btn" title="خروج از داشبورد" onclick="logout()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow"><span class="sq"></span> پایش لحظه‌ای مغایرت‌ها</div>
+    <h1 class="title">داشبورد <span class="hl">مغایرت سفارشات</span> ازکی سلر</h1>
+    <p class="subtitle">پیگیری، بررسی و ثبت وضعیت مغایرت و تخفیفات سفارشات خودرویی — رشته خودرویی: ثالث و بدنه</p>
+    <div class="header-actions">
+      <button class="icon-btn" title="بارگذاری مجدد" onclick="refreshData(true)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8M21 3v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16M3 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" title="لاگ تغییرات" onclick="openLog()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" title="تنظیمات بک‌آپ گوگل‌شیت" onclick="openSettings()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.32 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.4"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= STAT CARDS ================= -->
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- ================= COMPOSITION BAR ================= -->
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title"><span class="pic">📊</span> ترکیب وضعیت سفارش‌ها بر اساس مبلغ</div>
+      </div>
+    </div>
+    <div class="comp-total">مجموع: <b id="compTotal">-</b> ریال</div>
+    <div class="comp-bar" id="compBar"></div>
+    <div class="comp-legend" id="compLegend"></div>
+  </div>
+
+  <!-- ================= CHARTS ================= -->
+  <div class="charts-grid">
+    <div class="panel">
+      <div class="panel-title"><span class="pic">🏢</span> سهم شرکت‌های بیمه</div>
+      <div class="chart-box tall"><canvas id="chartCompany"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span class="pic">👥</span> سهم نمایندگان (بر اساس مبلغ)</div>
+      <div class="chart-box tall"><canvas id="chartAgentAmount"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="pic">📈</span> روند ماهانه مغایرت‌ها</div>
+    <div class="panel-sub" style="margin:-8px 0 14px 0;">تعداد سفارش و مبلغ مغایرت (میلیون ریال) به تفکیک ماه شمسی</div>
+    <div class="chart-box tall"><canvas id="chartTrend"></canvas></div>
+  </div>
+
+  <!-- ================= SEARCH ================= -->
+  <div class="panel">
+    <div class="panel-title" style="margin-bottom:16px;"><span class="pic">🔎</span> موتور جستجوی هوشمند</div>
+    <div class="search-wrap">
+      <div class="search-input-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input id="searchBox" placeholder="جستجو در شماره سفارش، شرح، پکیجی..." oninput="applyFilters()">
+      </div>
+      <select class="filter-sel" id="fCompany" onchange="applyFilters()"><option value="">همه شرکت‌های بیمه</option></select>
+      <select class="filter-sel" id="fAgent" onchange="applyFilters()"><option value="">همه نمایندگان</option></select>
+      <select class="filter-sel" id="fStatus" onchange="applyFilters()"><option value="">همه وضعیت‌ها</option></select>
+      <select class="filter-sel" id="fShift" onchange="applyFilters()"><option value="">همه شیفت‌ها</option></select>
+      <button class="clear-btn" onclick="clearFilters()">پاک‌کردن فیلترها</button>
+    </div>
+    <div class="result-count" id="resultCount"></div>
+  </div>
+
+  <!-- ================= TABLE ================= -->
+  <div class="panel">
+    <div class="table-toolbar">
+      <button class="btn primary" onclick="openAddModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        افزودن مورد جدید
+      </button>
+      <button class="btn" onclick="exportCSV()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        دریافت خروجی CSV
+      </button>
+      <button class="btn" onclick="refreshData(true)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8M21 3v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16M3 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        بروزرسانی
+      </button>
+    </div>
+
+    <div class="panel-title" style="margin-bottom:14px;"><span class="pic">📄</span> فهرست موارد</div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>ردیف</th>
+            <th>شماره سفارش</th>
+            <th>شرکت بیمه</th>
+            <th>نماینده</th>
+            <th>تاریخ</th>
+            <th>شیفت</th>
+            <th>مبلغ (ریال)</th>
+            <th>وضعیت سفارش</th>
+            <th>توضیحات</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <div class="info" id="pageInfo"></div>
+      <div class="page-btns" id="pageBtns"></div>
+    </div>
+  </div>
+
+  <footer class="note">
+    داشبورد مغایرت سفارشات ازکی سلر · داده‌ها در پایگاه‌داده اختصاصی این داشبورد ذخیره می‌شوند (مستقل از فایل اصلی گوگل‌شیت) · نسخه ۱٫۰
+  </footer>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="editModalTitle">افزودن مورد جدید</h3><button onclick="closeModal('editModalOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>شماره سفارش</label><input id="f_order_no"></div>
+        <div class="field"><label>پکیجی</label><input id="f_packagei"></div>
+        <div class="field"><label>شرکت بیمه</label>
+          <select id="f_company"></select>
+        </div>
+        <div class="field"><label>نام نماینده</label>
+          <select id="f_agent"></select>
+        </div>
+        <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
+        <div class="field"><label>شیفت صدور الحاقیه</label>
+          <select id="f_shift"><option value="صبح">☀️ صبح</option><option value="عصر">🌙 عصر</option></select>
+        </div>
+        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="number"></div>
+        <div class="field"><label>وضعیت سفارش</label>
+          <select id="f_status"><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
+        </div>
+        <div class="field"><label>وضعیت ایمیل</label>
+          <select id="f_email_status"><option value="ارسال شد - در حال بررسی">ارسال شد - در حال بررسی</option><option value="بررسی شد - تایید شده">بررسی شد - تایید شده</option></select>
+        </div>
+        <div class="field"><label>تایید سرپرست صدور</label><select id="f_supervisor"><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>تایید مدیر ارشد</label><select id="f_manager"><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field full"><label>شرح مغایرت (خلاصه)</label><input id="f_issue"></div>
+        <div class="field full"><label>نتیجه بررسی سلر (سفارش الحاقیه یا تیکت)</label><input id="f_seller_result"></div>
+        <div class="field full"><label>نتیجه بررسی تیم صدور الحاقیه (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('editModalOverlay')">انصراف</button>
+      <button class="btn primary" onclick="saveRow()">ذخیره</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteModalOverlay">
+  <div class="modal small">
+    <div class="modal-body">
+      <div class="warn-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="confirm-text">آیا مطمئن هستید می‌خواهید مورد شماره سفارش <b id="delOrderNo"></b> را حذف کنید؟<br>این عملیات قابل بازگشت نیست.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal('deleteModalOverlay')">انصراف</button>
+      <button class="btn" style="background:var(--red);border:none;color:#fff;" onclick="confirmDelete()">بله، حذف کن</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="logModalOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3>لاگ تغییرات تیم</h3><button onclick="closeModal('logModalOverlay')">✕</button></div>
+    <div class="modal-body" id="logBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settingsModalOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3>تنظیمات داشبورد</h3><button onclick="closeModal('settingsModalOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="settings-row">
+        <div><div class="lbl">اتصال به گوگل‌شیت اصلی</div><div class="desc">این داشبورد همیشه مستقیم از/به همان فایل گوگل‌شیت شما می‌خواند و می‌نویسد</div></div>
+        <span class="badge" id="settingsConnBadge" style="white-space:nowrap;">🟢 متصل</span>
+      </div>
+      <div class="settings-row" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:16px;">
+        <div><div class="lbl">لینک گوگل‌شیت اصلی (فقط برای ادمین)</div><div class="desc sheet-link">https://docs.google.com/spreadsheets/d/1SWGS0ULdLs6Wu932RvqmOlTiDt9wCrNhJyAja2ijmAY/edit?gid=0</div></div>
+      </div>
+
+      <div class="settings-row" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:16px;flex-direction:column;align-items:stretch;">
+        <div class="lbl" style="margin-bottom:10px;">مدیریت لیست‌ها</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input id="newCompanyInput" placeholder="نام شرکت بیمه جدید" style="flex:1;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
+          <button class="btn" onclick="addCompanyOption()">افزودن</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input id="newAgentInput" placeholder="نام نماینده جدید" style="flex:1;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
+          <button class="btn" onclick="addAgentOption()">افزودن</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const MONTHS_FA = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+const STATUS_COLORS = {
+  'پرداخت شد': '#3ab7ff',
+  'تخفیف شد': '#22e6ae',
+  'در انتظار تخفیف': '#ffb648',
+  'در انتظار پرداخت': '#ff5c93',
+};
+const STATUS_CLASS = {
+  'پرداخت شد': 'paid',
+  'تخفیف شد': 'discounted',
+  'در انتظار تخفیف': 'wait-discount',
+  'در انتظار پرداخت': 'wait-pay',
+};
+const AGENT_COLORS = ['#22e6ae','#3ab7ff','#a06bff','#ffb648','#ff5c93','#ffd23f','#4dd0e1','#c084fc','#f472b6','#84cc16','#fb923c','#60a5fa'];
+
+let orders = [];
+let auditLog = [];
+let currentUser = '';
+let filtered = [];
+let currentPage = 1;
+const PAGE_SIZE = 25;
+let chartInstances = {};
+let pendingDeleteId = null;
+let editingId = null;
+
+const STORE_ME = 'ozaki_disc_myname_v1'; // localStorage — این‌جا یک وب‌سایت واقعی است، نه Artifact
+let extraCompanies = [];
+let extraAgents = [];
+const EMAIL_STATUS_OPTIONS = ['ارسال شد - در حال بررسی', 'بررسی شد - تایید شده'];
+
+// ============ این دو مقدار را بعد از publish کردن Apps Script خودتان جایگزین کنید ============
+const GS_URL = 'https://script.google.com/macros/s/AKfycbwfeYc1XlUpEOkGecV9ftiOZdYASnHmbhylOI1fPvBazshLnGdrdUG2qcDHh4QE-uni/exec';
+const GS_TOKEN = 'Azki-Mali';
+// ================================================================================================
+
+function normStatus(s){ return (s||'').trim(); }
+function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+function esc(s){ const d=document.createElement('div'); d.textContent = s==null?'':String(s); return d.innerHTML; }
+
+/* ---------------- local (browser) helpers — فقط برای به‌خاطر سپردن نام کاربر ---------------- */
+function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+function localSet(key, val){ try{ localStorage.setItem(key, val); }catch(e){} }
+
+/* ---------------- Google Sheet backend (تنها منبع داده) ---------------- */
+async function gsListRows(){
+  const url = GS_URL + '?action=list&token=' + encodeURIComponent(GS_TOKEN);
+  const res = await fetch(url, { method:'GET' });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
+  return json.rows.map(r => ({ ...r, id: Number(r.id), amount: Number(r.amount)||0 }));
+}
+async function gsCall(action, payload){
+  const res = await fetch(GS_URL, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, token:GS_TOKEN, ...payload })
+  });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
+  return json;
+}
+async function gsGetConfig(){
+  const url = GS_URL + '?action=config&token=' + encodeURIComponent(GS_TOKEN);
+  const res = await fetch(url, { method:'GET' });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
+  return json.config || {};
+}
+async function gsGetLogs(){
+  const url = GS_URL + '?action=logs&token=' + encodeURIComponent(GS_TOKEN);
+  const res = await fetch(url, { method:'GET' });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
+  return json.logs || [];
+}
+async function gsSetConfig(key, value){ return gsCall('setConfig', { key, value }); }
+async function gsAddLog(user, action, text){ return gsCall('addLog', { user, logAction:action, text }); }
+
+/* ---------------- init ---------------- */
+async function init(){
+  const savedName = localGet(STORE_ME);
+  if(savedName) document.getElementById('gateName').value = savedName;
+  try{
+    window.__cfg = await gsGetConfig();
+  }catch(e){
+    window.__cfg = { pass: null };
+    document.getElementById('gateErr').textContent = 'اتصال اولیه به گوگل‌شیت برقرار نشد. صفحه را رفرش کنید.';
+  }
+}
+init();
+
+async function tryEnter(){
+  const name = document.getElementById('gateName').value.trim();
+  const pass = document.getElementById('gatePass').value.trim();
+  const errBox = document.getElementById('gateErr');
+  if(!name){ errBox.textContent = 'لطفاً نام خود را وارد کنید.'; return; }
+  if(!window.__cfg || window.__cfg.pass === null || window.__cfg.pass === undefined){
+    try{ window.__cfg = await gsGetConfig(); }
+    catch(e){ errBox.textContent = 'اتصال به گوگل‌شیت برقرار نشد. صفحه را رفرش کنید.'; return; }
+  }
+  if(pass !== window.__cfg.pass){ errBox.textContent = 'رمز دسترسی اشتباه است.'; return; }
+  errBox.textContent = '';
+  currentUser = name;
+  localSet(STORE_ME, name);
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('whoAmI').textContent = name;
+  await bootDashboard();
+}
+
+async function loadOrders(showErrToast){
+  try{
+    orders = await gsListRows();
+    window.__lastSyncOk = true;
+  }catch(e){
+    window.__lastSyncOk = false;
+    if(showErrToast) showToast('اتصال به گوگل‌شیت برقرار نشد: ' + e.message, true);
+  }
+}
+
+async function bootDashboard(){
+  await loadOrders(true);
+  try{ auditLog = await gsGetLogs(); }catch(e){ auditLog = []; }
+  try{
+    const cfg = window.__cfg || {};
+    extraCompanies = cfg.companies_extra ? JSON.parse(cfg.companies_extra) : [];
+    extraAgents = cfg.agents_extra ? JSON.parse(cfg.agents_extra) : [];
+  }catch(e){ extraCompanies = []; extraAgents = []; }
+  renderSheetBadge();
+  populateFilterOptions();
+  populateFormSelects();
+  applyFilters();
+}
+
+async function refreshData(manual){
+  await loadOrders(!!manual);
+  try{ auditLog = await gsGetLogs(); }catch(e){}
+  renderSheetBadge();
+  populateFilterOptions();
+  populateFormSelects();
+  applyFilters();
+  if(manual && (window.__lastSyncOk !== false)) showToast('داده‌ها بروزرسانی شد ✓');
+}
+
+function renderSheetBadge(){
+  const ok = window.__lastSyncOk !== false;
+  document.getElementById('sheetStatusTxt').textContent = ok ? 'فعال (زنده)' : 'قطع شده';
+  document.getElementById('sheetDot').className = 'dot' + (ok ? '' : ' off');
+  const b = document.getElementById('settingsConnBadge');
+  if(b) b.textContent = ok ? '🟢 متصل' : '🔴 قطع شده';
+}
+
+/* ---------------- audit log ---------------- */
+async function pushLog(action, text){
+  auditLog.unshift({ ts: new Date().toISOString(), user: currentUser, action, text });
+  try{ await gsAddLog(currentUser, action, text); }catch(e){}
+}
+function timeAgo(ts){
+  const d = new Date(ts);
+  return d.toLocaleString('fa-IR');
+}
+function openLog(){
+  const body = document.getElementById('logBody');
+  if(!auditLog.length){
+    body.innerHTML = '<div class="empty-log">هنوز تغییری ثبت نشده است.</div>';
+  } else {
+    body.innerHTML = auditLog.map(l=>`
+      <div class="log-item ${l.action}">
+        <div class="log-dot"></div>
+        <div>
+          <div class="log-text">${esc(l.text)}</div>
+          <div class="log-meta">${esc(l.user)} · ${timeAgo(l.ts)}</div>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('logModalOverlay').classList.add('show');
+}
+
+/* ---------------- filters ---------------- */
+function populateFilterOptions(){
+  const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
+  const agents = [...new Set([...orders.map(o=>o.agent), ...extraAgents].filter(Boolean))].sort();
+  const statuses = [...new Set(orders.map(o=>normStatus(o.status)).filter(Boolean))];
+  const shifts = [...new Set(orders.map(o=>o.shift).filter(Boolean))];
+  fillSelect('fCompany', companies, 'همه شرکت‌های بیمه');
+  fillSelect('fAgent', agents, 'همه نمایندگان');
+  fillSelect('fStatus', statuses, 'همه وضعیت‌ها');
+  fillSelect('fShift', shifts, 'همه شیفت‌ها');
+}
+function populateFormSelects(){
+  const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
+  const agents = [...new Set([...orders.map(o=>o.agent), ...extraAgents].filter(Boolean))].sort();
+  const companySel = document.getElementById('f_company');
+  const prevC = companySel.value;
+  companySel.innerHTML = companies.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(companies.includes(prevC)) companySel.value = prevC;
+  const agentSel = document.getElementById('f_agent');
+  const prevA = agentSel.value;
+  agentSel.innerHTML = `<option value="">— انتخاب نماینده —</option>` + agents.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(agents.includes(prevA)) agentSel.value = prevA;
+}
+function fillSelect(id, arr, allLabel){
+  const sel = document.getElementById(id);
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">${allLabel}</option>` + arr.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(arr.includes(prev)) sel.value = prev;
+}
+function clearFilters(){
+  document.getElementById('searchBox').value='';
+  document.getElementById('fCompany').value='';
+  document.getElementById('fAgent').value='';
+  document.getElementById('fStatus').value='';
+  document.getElementById('fShift').value='';
+  applyFilters();
+}
+function applyFilters(){
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const fc = document.getElementById('fCompany').value;
+  const fa = document.getElementById('fAgent').value;
+  const fs = document.getElementById('fStatus').value;
+  const fsh = document.getElementById('fShift').value;
+
+  filtered = orders.filter(o=>{
+    if(fc && o.company !== fc) return false;
+    if(fa && o.agent !== fa) return false;
+    if(fs && normStatus(o.status) !== fs) return false;
+    if(fsh && o.shift !== fsh) return false;
+    if(q){
+      const hay = [o.order_no,o.issue,o.seller_result,o.issuance_result,o.packagei,o.agent,o.company].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  currentPage = 1;
+  document.getElementById('resultCount').textContent = `${filtered.length.toLocaleString('en-US')} مورد از ${orders.length.toLocaleString('en-US')} مورد نمایش داده می‌شود`;
+  renderAll();
+}
+
+/* ---------------- stats ---------------- */
+function computeStats(list){
+  const total = list.length;
+  const totalAmount = list.reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const discounted = list.filter(o=>normStatus(o.status)==='تخفیف شد');
+  const notDiscounted = list.filter(o=>normStatus(o.status)!=='تخفیف شد');
+  const discAmount = discounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const notDiscAmount = notDiscounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const pct = total ? (discounted.length/total*100) : 0;
+  return { total, totalAmount, discounted, notDiscounted, discAmount, notDiscAmount, pct };
+}
+
+function renderStats(){
+  const s = computeStats(filtered);
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-ic bg-blue c-blue">📦</div></div>
+      <div class="stat-label">تعداد کل سفارشات اعلام‌شده</div>
+      <div class="stat-value">${s.total.toLocaleString('en-US')}</div>
+      <div class="stat-sub">از مجموع ${orders.length.toLocaleString('en-US')} سفارش ثبت‌شده</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-ic bg-orange c-orange">💰</div></div>
+      <div class="stat-label">مبلغ مغایرت کل سفارشات</div>
+      <div class="stat-value">${fmt(s.totalAmount)}</div>
+      <div class="stat-sub">ریال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-ic bg-green c-green">✅</div></div>
+      <div class="stat-label">سفارشات تخفیف‌شده</div>
+      <div class="stat-value">${s.discounted.length.toLocaleString('en-US')}</div>
+      <div class="stat-sub">${fmt(s.discAmount)} ریال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-ic bg-pink c-pink">⏳</div></div>
+      <div class="stat-label">سفارشات تخفیف‌نشده</div>
+      <div class="stat-value">${s.notDiscounted.length.toLocaleString('en-US')}</div>
+      <div class="stat-sub">${fmt(s.notDiscAmount)} ریال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-ic bg-purple c-purple">📈</div></div>
+      <div class="stat-label">درصد سفارشات تخفیف‌شده</div>
+      <div class="stat-value">${s.pct.toFixed(1)}٪</div>
+      <div class="stat-sub">از کل موارد فیلترشده</div>
+    </div>
+  `;
+}
+
+function renderComposition(){
+  const list = filtered;
+  const total = list.reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const groups = {};
+  list.forEach(o=>{
+    const st = normStatus(o.status) || 'نامشخص';
+    groups[st] = (groups[st]||0) + (Number(o.amount)||0);
+  });
+  document.getElementById('compTotal').textContent = fmt(total);
+  const bar = document.getElementById('compBar');
+  const legend = document.getElementById('compLegend');
+  bar.innerHTML=''; legend.innerHTML='';
+  const order = ['تخفیف شد','پرداخت شد','در انتظار تخفیف','در انتظار پرداخت'];
+  const keys = Object.keys(groups).sort((a,b)=> order.indexOf(a)-order.indexOf(b));
+  keys.forEach(k=>{
+    const amt = groups[k];
+    const pct = total ? (amt/total*100) : 0;
+    const color = STATUS_COLORS[k] || '#888';
+    const seg = document.createElement('div');
+    seg.style.width = pct+'%';
+    seg.style.background = color;
+    bar.appendChild(seg);
+    const count = list.filter(o=>normStatus(o.status)===k).length;
+    const span = document.createElement('span');
+    span.innerHTML = `<i style="background:${color}"></i> ${esc(k)} <b>${count.toLocaleString('en-US')} سفارش</b> · ${pct.toFixed(1)}٪`;
+    legend.appendChild(span);
+  });
+}
+
+/* ---------------- charts ---------------- */
+function destroyChart(key){ if(chartInstances[key]){ chartInstances[key].destroy(); delete chartInstances[key]; } }
+
+function renderCharts(){
+  const list = filtered;
+
+  // status distribution donut
+  // company share donut
+  const compCounts = {};
+  list.forEach(o=>{ const c=o.company||'نامشخص'; compCounts[c]=(compCounts[c]||0)+1; });
+  const compKeys = Object.keys(compCounts).sort((a,b)=>compCounts[b]-compCounts[a]);
+  destroyChart('company');
+  chartInstances.company = new Chart(document.getElementById('chartCompany'), {
+    type:'doughnut',
+    data:{ labels:compKeys, datasets:[{ data:compKeys.map(k=>compCounts[k]), backgroundColor:compKeys.map((_,i)=>AGENT_COLORS[i%AGENT_COLORS.length]), borderWidth:0 }] },
+    options: baseDonutOpts()
+  });
+
+  // agent by amount (horizontal bar)
+  const agentAmt = {};
+  list.forEach(o=>{ const a=o.agent||'نامشخص'; agentAmt[a]=(agentAmt[a]||0)+(Number(o.amount)||0); });
+  const agentAmtKeys = Object.keys(agentAmt).sort((a,b)=>agentAmt[b]-agentAmt[a]).slice(0,10);
+  destroyChart('agentAmount');
+  chartInstances.agentAmount = new Chart(document.getElementById('chartAgentAmount'), {
+    type:'bar',
+    data:{ labels:agentAmtKeys, datasets:[{ data:agentAmtKeys.map(k=>Math.round(agentAmt[k]/1e6)), backgroundColor:'#3ab7ff', borderRadius:6 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> ctx.parsed.x.toLocaleString('en-US') + ' میلیون ریال' } } },
+      scales:{ x:{ ticks:{ color:'#7c8a9a' }, grid:{ color:'rgba(255,255,255,0.03)' } }, y:{ ticks:{ color:'#e7edf3', font:{family:'Vazirmatn', size:11.5} }, grid:{ display:false } } }
+    }
+  });
+
+  // monthly trend
+  const monthOrder = [11,12,1,2,3,4,5,6,7,8,9,10];
+  const buckets = {};
+  let older = 0, olderAmt = 0;
+  list.forEach(o=>{
+    const parts = String(o.date||'').split('/');
+    const m = parseInt(parts[0],10);
+    if(!monthOrder.includes(m)){ older++; olderAmt += Number(o.amount)||0; return; }
+    if(!buckets[m]) buckets[m] = { count:0, amt:0 };
+    buckets[m].count++; buckets[m].amt += Number(o.amount)||0;
+  });
+  const labels = [];
+  const counts = [];
+  const amounts = [];
+  if(older>0){ labels.push('قدیمی‌تر'); counts.push(older); amounts.push(Math.round(olderAmt/1e6)); }
+  monthOrder.forEach(m=>{
+    const suffix = (m===11||m===12) ? ' ۴' : ' ۵';
+    labels.push(MONTHS_FA[m-1] + suffix);
+    counts.push(buckets[m] ? buckets[m].count : 0);
+    amounts.push(buckets[m] ? Math.round(buckets[m].amt/1e6) : 0);
+  });
+  destroyChart('trend');
+  chartInstances.trend = new Chart(document.getElementById('chartTrend'), {
+    data:{ labels, datasets:[
+      { type:'bar', label:'تعداد سفارش', data:counts, backgroundColor:'rgba(34,230,174,0.55)', borderRadius:6, yAxisID:'y' },
+      { type:'line', label:'مبلغ (میلیون ریال)', data:amounts, borderColor:'#ffb648', backgroundColor:'#ffb648', tension:0.35, yAxisID:'y1', pointRadius:3 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#7c8a9a', font:{family:'Vazirmatn'} } } },
+      scales:{
+        x:{ ticks:{ color:'#7c8a9a', font:{family:'Vazirmatn', size:11} }, grid:{ color:'rgba(255,255,255,0.03)' } },
+        y:{ position:'left', ticks:{ color:'#7c8a9a' }, grid:{ color:'rgba(255,255,255,0.03)' } },
+        y1:{ position:'right', ticks:{ color:'#7c8a9a' }, grid:{ display:false } }
+      }
+    }
+  });
+}
+function baseDonutOpts(){
+  return {
+    responsive:true, maintainAspectRatio:false, cutout:'62%',
+    plugins:{ legend:{ position:'bottom', labels:{ color:'#7c8a9a', boxWidth:10, font:{family:'Vazirmatn', size:11} } } }
+  };
+}
+
+/* ---------------- table ---------------- */
+function renderTable(){
+  const start = (currentPage-1)*PAGE_SIZE;
+  const pageItems = filtered.slice(start, start+PAGE_SIZE);
+  const tbody = document.getElementById('tableBody');
+  if(!pageItems.length){
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted2);padding:40px;">موردی یافت نشد</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = pageItems.map((o,idx)=>{
+    const st = normStatus(o.status);
+    const pillClass = STATUS_CLASS[st] || 'wait-discount';
+    const shiftIcon = o.shift === 'عصر' ? `<span class="shift-ic moon">🌙 عصر</span>` : `<span class="shift-ic sun">☀️ صبح</span>`;
+    return `
+    <tr>
+      <td>${(start+idx+1).toLocaleString('en-US')}</td>
+      <td class="mono">${esc(o.order_no)}</td>
+      <td>${esc(o.company)}</td>
+      <td>${esc(o.agent)}</td>
+      <td class="mono">${esc(o.date)}</td>
+      <td>${shiftIcon}</td>
+      <td class="amount-cell">${fmt(o.amount)}</td>
+      <td><span class="pill ${pillClass}">${esc(st)}</span></td>
+      <td>
+        <button class="desc-toggle-btn" id="descBtn-${o.id}" onclick="toggleDesc(${o.id})">
+          <span>جزئیات</span>
+          <svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </td>
+      <td>
+        <div class="row-actions">
+          <button class="edit" title="ویرایش" onclick="openEditModal(${o.id})">✏️</button>
+          <button class="del" title="حذف" onclick="askDelete(${o.id})">🗑️</button>
+        </div>
+      </td>
+    </tr>
+    <tr class="desc-row" id="desc-${o.id}">
+      <td colspan="10">
+        <div class="desc-inner">
+          <h4>شرح مغایرت</h4>
+          <div>${esc(o.issue)||'—'}</div>
+          <div class="row2">
+            <div><h4>نتیجه بررسی سلر (سفارش الحاقیه یا تیکت)</h4><div>${esc(o.seller_result)||'—'}</div></div>
+            <div><h4>پکیجی</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
+          </div>
+          <h4 style="margin-top:12px;">نتیجه بررسی تیم صدور الحاقیه</h4>
+          <div>${esc(o.issuance_result)||'—'}</div>
+          <div class="row2">
+            <div><h4>تایید سرپرست صدور</h4><div>${esc(o.supervisor_approval)||'—'}</div></div>
+            <div><h4>تایید مدیر ارشد</h4><div>${esc(o.manager_approval)||'—'}</div></div>
+          </div>
+          <h4 style="margin-top:12px;">وضعیت ایمیل</h4>
+          <div>${esc(o.email_status)||'—'}</div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function toggleDesc(id){
+  const row = document.getElementById('desc-'+id);
+  row.classList.toggle('open');
+  const btn = document.getElementById('descBtn-'+id);
+  if(btn) btn.classList.toggle('open');
+}
+
+function renderPagination(){
+  const totalPages = Math.max(1, Math.ceil(filtered.length/PAGE_SIZE));
+  if(currentPage>totalPages) currentPage = totalPages;
+  const start = filtered.length ? (currentPage-1)*PAGE_SIZE+1 : 0;
+  const end = Math.min(currentPage*PAGE_SIZE, filtered.length);
+  document.getElementById('pageInfo').textContent = `نمایش ${start.toLocaleString('en-US')} تا ${end.toLocaleString('en-US')} از ${filtered.length.toLocaleString('en-US')} مورد`;
+  const btnsWrap = document.getElementById('pageBtns');
+  let html = `<button ${currentPage===1?'disabled':''} onclick="gotoPage(${currentPage-1})">قبلی</button>`;
+  const maxBtns = 6;
+  let pages = [];
+  if(totalPages<=maxBtns){ for(let i=1;i<=totalPages;i++) pages.push(i); }
+  else {
+    pages = [1,2,'…',totalPages-1,totalPages];
+    if(currentPage>3 && currentPage<totalPages-2) pages = [1,'…',currentPage,'…',totalPages];
+  }
+  pages.forEach(p=>{
+    if(p==='…') html += `<span style="color:var(--muted2);padding:0 4px;">…</span>`;
+    else html += `<button class="${p===currentPage?'active':''}" onclick="gotoPage(${p})">${p.toLocaleString('en-US')}</button>`;
+  });
+  html += `<button ${currentPage===totalPages?'disabled':''} onclick="gotoPage(${currentPage+1})">بعدی</button>`;
+  btnsWrap.innerHTML = html;
+}
+function gotoPage(p){ currentPage = p; renderTable(); renderPagination(); }
+
+function renderAll(){
+  renderStats();
+  renderComposition();
+  renderCharts();
+  renderTable();
+  renderPagination();
+}
+
+/* ---------------- CRUD ---------------- */
+function openAddModal(){
+  editingId = null;
+  populateFormSelects();
+  document.getElementById('editModalTitle').textContent = 'افزودن مورد جدید';
+  ['order_no','packagei','agent','date','amount','issue','seller_result','issuance_result'].forEach(f=>document.getElementById('f_'+f).value='');
+  document.getElementById('f_company').selectedIndex = 0;
+  document.getElementById('f_agent').value = '';
+  document.getElementById('f_shift').value = 'صبح';
+  document.getElementById('f_status').value = 'در انتظار تخفیف';
+  document.getElementById('f_email_status').value = 'ارسال شد - در حال بررسی';
+  document.getElementById('f_supervisor').value = 'عدم تایید';
+  document.getElementById('f_manager').value = 'عدم تایید';
+  document.getElementById('editModalOverlay').classList.add('show');
+}
+function openEditModal(id){
+  const o = orders.find(x=>x.id===id);
+  if(!o) return;
+  editingId = id;
+  populateFormSelects();
+  document.getElementById('editModalTitle').textContent = 'ویرایش مورد سفارش ' + o.order_no;
+  document.getElementById('f_order_no').value = o.order_no||'';
+  document.getElementById('f_packagei').value = o.packagei||'';
+  document.getElementById('f_company').value = o.company||'';
+  document.getElementById('f_agent').value = o.agent||'';
+  document.getElementById('f_date').value = o.date||'';
+  document.getElementById('f_shift').value = o.shift||'صبح';
+  document.getElementById('f_amount').value = o.amount||0;
+  document.getElementById('f_status').value = normStatus(o.status)||'در انتظار تخفیف';
+  document.getElementById('f_email_status').value = o.email_status || 'ارسال شد - در حال بررسی';
+  document.getElementById('f_supervisor').value = o.supervisor_approval||'عدم تایید';
+  document.getElementById('f_manager').value = o.manager_approval||'عدم تایید';
+  document.getElementById('f_issue').value = o.issue||'';
+  document.getElementById('f_seller_result').value = o.seller_result||'';
+  document.getElementById('f_issuance_result').value = o.issuance_result||'';
+  document.getElementById('editModalOverlay').classList.add('show');
+}
+async function saveRow(){
+  const orderNo = document.getElementById('f_order_no').value.trim();
+  if(!orderNo){ showToast('شماره سفارش الزامی است', true); return; }
+  const payload = {
+    order_no: orderNo,
+    line: 'خودرویی - ثالث',
+    company: document.getElementById('f_company').value,
+    agent: document.getElementById('f_agent').value.trim(),
+    date: document.getElementById('f_date').value.trim(),
+    issue: document.getElementById('f_issue').value.trim(),
+    seller_result: document.getElementById('f_seller_result').value.trim(),
+    issuance_result: document.getElementById('f_issuance_result').value.trim(),
+    packagei: document.getElementById('f_packagei').value.trim(),
+    amount: Number(document.getElementById('f_amount').value)||0,
+    shift: document.getElementById('f_shift').value,
+    email_status: document.getElementById('f_email_status').value.trim(),
+    supervisor_approval: document.getElementById('f_supervisor').value,
+    manager_approval: document.getElementById('f_manager').value,
+    status: document.getElementById('f_status').value,
+  };
+  try{
+    if(editingId){
+      await gsCall('update', { id: editingId, data: payload });
+    } else {
+      await gsCall('add', { data: payload });
+    }
+    await loadOrders(true);
+    if(editingId){
+      await pushLog('edit', `${currentUser} مورد سفارش ${orderNo} را ویرایش کرد`);
+      showToast('تغییرات ذخیره شد ✓');
+    } else {
+      await pushLog('add', `${currentUser} مورد سفارش ${orderNo} را اضافه کرد`);
+      showToast('مورد جدید اضافه شد ✓');
+    }
+    closeModal('editModalOverlay');
+    populateFilterOptions();
+    applyFilters();
+  }catch(e){
+    showToast('ذخیره ناموفق بود: ' + e.message, true);
+  }
+}
+function askDelete(id){
+  pendingDeleteId = id;
+  const o = orders.find(x=>x.id===id);
+  document.getElementById('delOrderNo').textContent = o ? o.order_no : '';
+  document.getElementById('deleteModalOverlay').classList.add('show');
+}
+async function confirmDelete(){
+  if(pendingDeleteId==null) return;
+  const o = orders.find(x=>x.id===pendingDeleteId);
+  try{
+    await gsCall('delete', { id: pendingDeleteId });
+    await loadOrders(true);
+    await pushLog('del', `${currentUser} مورد سفارش ${o?o.order_no:''} را حذف کرد`);
+    closeModal('deleteModalOverlay');
+    showToast('مورد حذف شد ✓');
+    pendingDeleteId = null;
+    populateFilterOptions();
+    applyFilters();
+  }catch(e){
+    showToast('حذف ناموفق بود: ' + e.message, true);
+  }
+}
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+/* ---------------- settings ---------------- */
+function openSettings(){
+  document.getElementById('settingsModalOverlay').classList.add('show');
+}
+async function logout(){
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('gate').style.display = 'flex';
+  document.getElementById('gatePass').value = '';
+  document.getElementById('gateErr').textContent = '';
+  currentUser = '';
+}
+async function addCompanyOption(){
+  const val = document.getElementById('newCompanyInput').value.trim();
+  if(!val){ showToast('نام شرکت را وارد کنید', true); return; }
+  try{
+    if(!extraCompanies.includes(val)) extraCompanies.push(val);
+    await gsSetConfig('companies_extra', JSON.stringify(extraCompanies));
+    document.getElementById('newCompanyInput').value = '';
+    showToast('شرکت بیمه اضافه شد ✓');
+    populateFilterOptions();
+    populateFormSelects();
+  }catch(e){
+    showToast('ذخیره ناموفق بود: ' + e.message, true);
+  }
+}
+async function addAgentOption(){
+  const val = document.getElementById('newAgentInput').value.trim();
+  if(!val){ showToast('نام نماینده را وارد کنید', true); return; }
+  try{
+    if(!extraAgents.includes(val)) extraAgents.push(val);
+    await gsSetConfig('agents_extra', JSON.stringify(extraAgents));
+    document.getElementById('newAgentInput').value = '';
+    showToast('نماینده اضافه شد ✓');
+    populateFilterOptions();
+    populateFormSelects();
+  }catch(e){
+    showToast('ذخیره ناموفق بود: ' + e.message, true);
+  }
+}
+
+/* ---------------- CSV export ---------------- */
+function exportCSV(){
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','شرح مغایرت','نتیجه بررسی سلر','نتیجه بررسی تیم صدور الحاقیه','پکیجی','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','وضعیت ایمیل','تایید سرپرست صدور','تایید مدیر ارشد','وضعیت سفارش'];
+  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.issuance_result,o.packagei,o.amount,o.shift,o.email_status,o.supervisor_approval,o.manager_approval,normStatus(o.status)]);
+  const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
+    const s = (v==null?'':String(v)).replace(/"/g,'""');
+    return /[",\n]/.test(s) ? `"${s}"` : s;
+  }).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'مغایرت-سفارشات-ازکی-سلر.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('فایل CSV دانلود شد ✓');
+}
+
+/* ---------------- toast ---------------- */
+function showToast(msg, isErr){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  if(isErr) t.style.borderColor = 'var(--red)';
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='.3s'; setTimeout(()=>t.remove(),300); }, 2600);
+}
+
+document.getElementById('gatePass').addEventListener('keydown', e=>{ if(e.key==='Enter') tryEnter(); });
+</script>
+</body>
+</html>
