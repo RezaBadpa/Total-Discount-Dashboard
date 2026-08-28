@@ -460,7 +460,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div class="field"><label>نام نماینده</label>
           <select id="f_agent"></select>
         </div>
-        <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
+        <div class="field"><label>تاریخ (غیرقابل ویرایش — محدودیت گوگل‌شیت)</label><input id="f_date" placeholder="M/D/1405" disabled style="opacity:.6;cursor:not-allowed;"></div>
         <div class="field"><label>شیفت صدور الحاقیه</label>
           <select id="f_shift"><option value="صبح">☀️ صبح</option><option value="عصر">🌙 عصر</option></select>
         </div>
@@ -590,7 +590,10 @@ function formatAmountInput(el){
   el.value = Number(raw).toLocaleString('en-US');
 }
 function orderMatchesPayload(row, payload){
-  const fields = ['order_no','company','agent','date','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
+  // فیلد 'date' به‌خاطر محدودیت «Column type» گوگل‌شیت هیچ‌وقت نوشته نمی‌شود؛
+  // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
+  // کل ذخیره‌سازی «ناموفق» گزارش شود.
+  const fields = ['order_no','company','agent','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
