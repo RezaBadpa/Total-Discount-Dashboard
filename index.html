@@ -295,6 +295,9 @@ tbody tr.expanded-row td{border-bottom:none;}
 .toggle .knob{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;right:2px;transition:.2s;}
 .toggle.on .knob{right:22px;}
 .sheet-link{font-size:12px;color:var(--blue);word-break:break-all;}
+.list-chip{display:inline-flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--border);padding:6px 8px 6px 12px;border-radius:999px;font-size:12.5px;color:var(--text);}
+.list-chip button{background:rgba(255,92,92,0.15);color:var(--red);border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;}
+.list-chip button:hover{background:rgba(255,92,92,0.3);}
 footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26px;line-height:2;}
 </style>
 </head>
@@ -525,10 +528,13 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <input id="newCompanyInput" placeholder="نام شرکت بیمه جدید" style="flex:1;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
           <button class="btn" onclick="addCompanyOption()">افزودن</button>
         </div>
+        <div id="companyChipsWrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
         <div style="display:flex;gap:8px;">
           <input id="newAgentInput" placeholder="نام نماینده جدید" style="flex:1;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
           <button class="btn" onclick="addAgentOption()">افزودن</button>
         </div>
+        <div id="agentChipsWrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+        <div class="desc" style="margin-top:10px;">فقط مواردی که خودتان از همین‌جا اضافه کرده‌اید قابل حذف‌اند — شرکت‌ها/نمایندگانی که در سفارش‌های واقعی ثبت شده‌اند همیشه در لیست باقی می‌مانند.</div>
       </div>
     </div>
   </div>
@@ -1205,6 +1211,7 @@ function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 
 /* ---------------- settings ---------------- */
 function openSettings(){
+  renderManageLists();
   document.getElementById('settingsModalOverlay').classList.add('show');
 }
 async function logout(){
@@ -1213,6 +1220,16 @@ async function logout(){
   document.getElementById('gatePass').value = '';
   document.getElementById('gateErr').textContent = '';
   currentUser = '';
+}
+function renderManageLists(){
+  const companyWrap = document.getElementById('companyChipsWrap');
+  const agentWrap = document.getElementById('agentChipsWrap');
+  companyWrap.innerHTML = extraCompanies.length
+    ? extraCompanies.map(c=>`<span class="list-chip">${esc(c)}<button onclick="removeCompanyOption('${esc(c).replace(/'/g,"\\'")}')" title="حذف">✕</button></span>`).join('')
+    : '<span style="color:var(--muted2);font-size:12px;">هنوز شرکتی اضافه نکرده‌اید</span>';
+  agentWrap.innerHTML = extraAgents.length
+    ? extraAgents.map(a=>`<span class="list-chip">${esc(a)}<button onclick="removeAgentOption('${esc(a).replace(/'/g,"\\'")}')" title="حذف">✕</button></span>`).join('')
+    : '<span style="color:var(--muted2);font-size:12px;">هنوز نماینده‌ای اضافه نکرده‌اید</span>';
 }
 async function addCompanyOption(){
   const val = document.getElementById('newCompanyInput').value.trim();
@@ -1224,8 +1241,21 @@ async function addCompanyOption(){
     showToast('شرکت بیمه اضافه شد ✓');
     populateFilterOptions();
     populateFormSelects();
+    renderManageLists();
   }catch(e){
     showToast('ذخیره ناموفق بود: ' + e.message, true);
+  }
+}
+async function removeCompanyOption(name){
+  try{
+    extraCompanies = extraCompanies.filter(c=>c!==name);
+    await gsSetConfig('companies_extra', JSON.stringify(extraCompanies));
+    showToast('شرکت بیمه حذف شد ✓');
+    populateFilterOptions();
+    populateFormSelects();
+    renderManageLists();
+  }catch(e){
+    showToast('حذف ناموفق بود: ' + e.message, true);
   }
 }
 async function addAgentOption(){
@@ -1238,8 +1268,21 @@ async function addAgentOption(){
     showToast('نماینده اضافه شد ✓');
     populateFilterOptions();
     populateFormSelects();
+    renderManageLists();
   }catch(e){
     showToast('ذخیره ناموفق بود: ' + e.message, true);
+  }
+}
+async function removeAgentOption(name){
+  try{
+    extraAgents = extraAgents.filter(a=>a!==name);
+    await gsSetConfig('agents_extra', JSON.stringify(extraAgents));
+    showToast('نماینده حذف شد ✓');
+    populateFilterOptions();
+    populateFormSelects();
+    renderManageLists();
+  }catch(e){
+    showToast('حذف ناموفق بود: ' + e.message, true);
   }
 }
 
