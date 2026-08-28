@@ -589,14 +589,20 @@ async function gsListRows(){
   return json.rows.map(r => ({ ...r, id: Number(r.id), amount: Number(r.amount)||0 }));
 }
 async function gsCall(action, payload){
-  const res = await fetch(GS_URL, {
-    method:'POST',
-    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action, token:GS_TOKEN, ...payload })
-  });
-  const json = await res.json();
-  if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
-  return json;
+  // نکته‌ی فنی: درخواست‌های POST به گوگل اپس‌اسکریپت به‌خاطر یک ریدایرکت داخلی گوگل
+  // با CORS معمولی قابل خواندن نیستند؛ به همین خاطر با حالت no-cors ارسال می‌شود
+  // (نمی‌توانیم پاسخ JSON را بخوانیم، اما خود درخواست واقعاً به گوگل‌شیت می‌رسد و اجرا می‌شود).
+  try{
+    await fetch(GS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, token:GS_TOKEN, ...payload })
+    });
+  }catch(e){
+    throw new Error('ارتباط با گوگل‌شیت برقرار نشد (شبکه/اینترنت را بررسی کنید)');
+  }
+  return { ok:true };
 }
 async function gsGetConfig(){
   const url = GS_URL + '?action=config&token=' + encodeURIComponent(GS_TOKEN);
@@ -1088,14 +1094,24 @@ async function saveRow(){
   try{
     if(editingId){
       await gsCall('update', { id: editingId, data: payload });
-    } else {
-      await gsCall('add', { data: payload });
-    }
-    await loadOrders(true);
-    if(editingId){
+      await loadOrders(true);
+      // چون پاسخ POST قابل خواندن نیست، با یک بارگذاری مجدد بررسی می‌کنیم که تغییر واقعاً روی شیت اعمال شده
+      const check = orders.find(o=>o.id===editingId);
+      const applied = check && Number(check.amount)===payload.amount && normStatus(check.status)===payload.status;
+      if(!applied){
+        showToast('⚠️ تغییر روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
+        return;
+      }
       await pushLog('edit', `${currentUser} مورد سفارش ${orderNo} را ویرایش کرد`);
       showToast('تغییرات ذخیره شد ✓');
     } else {
+      const beforeCount = orders.length;
+      await gsCall('add', { data: payload });
+      await loadOrders(true);
+      if(orders.length <= beforeCount){
+        showToast('⚠️ مورد جدید روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
+        return;
+      }
       await pushLog('add', `${currentUser} مورد سفارش ${orderNo} را اضافه کرد`);
       showToast('مورد جدید اضافه شد ✓');
     }
@@ -1118,6 +1134,11 @@ async function confirmDelete(){
   try{
     await gsCall('delete', { id: pendingDeleteId });
     await loadOrders(true);
+    const stillThere = orders.find(x=>x.id===pendingDeleteId);
+    if(stillThere){
+      showToast('⚠️ حذف روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
+      return;
+    }
     await pushLog('del', `${currentUser} مورد سفارش ${o?o.order_no:''} را حذف کرد`);
     closeModal('deleteModalOverlay');
     showToast('مورد حذف شد ✓');
