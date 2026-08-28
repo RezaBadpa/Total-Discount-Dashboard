@@ -536,6 +536,15 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+<!-- فرم مخفی برای ارسال درخواست‌های نوشتنی به گوگل‌شیت (دور زدن محدودیت ریدایرکت CORS در fetch) -->
+<iframe name="hiddenPostFrame" style="display:none;"></iframe>
+<form id="hiddenPostForm" method="POST" target="hiddenPostFrame" style="display:none;">
+  <input type="hidden" name="action" id="hpf_action">
+  <input type="hidden" name="token" id="hpf_token">
+  <input type="hidden" name="payload" id="hpf_payload">
+</form>
+
+
 <script>
 const MONTHS_FA = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 const STATUS_COLORS = {
@@ -575,6 +584,15 @@ const GS_TOKEN = 'Azki-Mali';
 function normStatus(s){ return (s||'').trim(); }
 function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
 function esc(s){ const d=document.createElement('div'); d.textContent = s==null?'':String(s); return d.innerHTML; }
+function orderMatchesPayload(row, payload){
+  const fields = ['order_no','company','agent','date','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
+  for(const f of fields){
+    if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
+  }
+  if(Number(row.amount)!==Number(payload.amount)) return false;
+  if(normStatus(row.status)!==normStatus(payload.status)) return false;
+  return true;
+}
 
 /* ---------------- local (browser) helpers — فقط برای به‌خاطر سپردن نام کاربر ---------------- */
 function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
@@ -588,21 +606,25 @@ async function gsListRows(){
   if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
   return json.rows.map(r => ({ ...r, id: Number(r.id), amount: Number(r.amount)||0 }));
 }
-async function gsCall(action, payload){
-  // نکته‌ی فنی: درخواست‌های POST به گوگل اپس‌اسکریپت به‌خاطر یک ریدایرکت داخلی گوگل
-  // با CORS معمولی قابل خواندن نیستند؛ به همین خاطر با حالت no-cors ارسال می‌شود
-  // (نمی‌توانیم پاسخ JSON را بخوانیم، اما خود درخواست واقعاً به گوگل‌شیت می‌رسد و اجرا می‌شود).
-  try{
-    await fetch(GS_URL, {
-      method:'POST',
-      mode:'no-cors',
-      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action, token:GS_TOKEN, ...payload })
-    });
-  }catch(e){
-    throw new Error('ارتباط با گوگل‌شیت برقرار نشد (شبکه/اینترنت را بررسی کنید)');
-  }
-  return { ok:true };
+function gsCall(action, payload){
+  // نکته‌ی فنی: درخواست‌های POST مستقیم (fetch) به گوگل اپس‌اسکریپت به‌خاطر یک ریدایرکت
+  // داخلی گوگل هرگز واقعاً به تابع doPost نمی‌رسند (fetch آن‌ها را به GET خالی تبدیل می‌کند).
+  // برای دور زدن این محدودیت، از یک فرم HTML واقعی و مخفی استفاده می‌کنیم — این روش
+  // مثل ارسال یک فرم معمولی توسط کاربر عمل می‌کند و این مشکل را ندارد.
+  return new Promise((resolve, reject)=>{
+    try{
+      document.getElementById('hpf_action').value = action;
+      document.getElementById('hpf_token').value = GS_TOKEN;
+      document.getElementById('hpf_payload').value = JSON.stringify(payload);
+      document.getElementById('hiddenPostForm').action = GS_URL;
+      document.getElementById('hiddenPostForm').submit();
+      // نمی‌توانیم پاسخ واقعی گوگل را از داخل iframe بخوانیم؛ کمی صبر می‌کنیم تا
+      // اسکریپت گوگل اجرا و روی شیت ذخیره شود، سپس با یک GET جدید نتیجه را تایید می‌کنیم.
+      setTimeout(()=> resolve({ ok:true }), 1500);
+    }catch(e){
+      reject(new Error('ارسال درخواست به گوگل‌شیت ناموفق بود'));
+    }
+  });
 }
 async function gsGetConfig(){
   const url = GS_URL + '?action=config&token=' + encodeURIComponent(GS_TOKEN);
@@ -1097,7 +1119,7 @@ async function saveRow(){
       await loadOrders(true);
       // چون پاسخ POST قابل خواندن نیست، با یک بارگذاری مجدد بررسی می‌کنیم که تغییر واقعاً روی شیت اعمال شده
       const check = orders.find(o=>o.id===editingId);
-      const applied = check && Number(check.amount)===payload.amount && normStatus(check.status)===payload.status;
+      const applied = check && orderMatchesPayload(check, payload);
       if(!applied){
         showToast('⚠️ تغییر روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
         return;
