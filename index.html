@@ -589,6 +589,23 @@ function formatAmountInput(el){
   if(!raw){ el.value = ''; return; }
   el.value = Number(raw).toLocaleString('en-US');
 }
+const FIELD_LABELS = {
+  order_no: 'شماره سفارش', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ',
+  issue: 'شرح مغایرت', seller_result: 'نتیجه بررسی سلر', issuance_result: 'نتیجه بررسی صدور',
+  packagei: 'پکیجی', amount: 'مبلغ', shift: 'شیفت', email_status: 'وضعیت ایمیل',
+  supervisor_approval: 'تایید سرپرست', manager_approval: 'تایید مدیر', status: 'وضعیت سفارش'
+};
+function buildDiffText(oldObj, payload){
+  const parts = [];
+  Object.keys(FIELD_LABELS).forEach(k=>{
+    const oldVal = oldObj ? (k==='amount' ? fmt(oldObj.amount||0) : String(oldObj[k]||'').trim()) : '';
+    const newVal = k==='amount' ? fmt(payload.amount||0) : String(payload[k]||'').trim();
+    if(oldVal !== newVal){
+      parts.push(`${FIELD_LABELS[k]}: «${oldVal||'—'}» ← «${newVal||'—'}»`);
+    }
+  });
+  return parts.length ? parts.join('، ') : 'بدون تغییر محسوس در فیلدها';
+}
 function orderMatchesPayload(row, payload){
   // فیلد 'date' به‌خاطر محدودیت «Column type» گوگل‌شیت هیچ‌وقت نوشته نمی‌شود؛
   // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
@@ -1124,6 +1141,7 @@ async function saveRow(){
     manager_approval: document.getElementById('f_manager').value,
     status: document.getElementById('f_status').value,
   };
+  const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
   try{
     if(editingId){
       await gsCall('update', { id: editingId, data: payload });
@@ -1135,7 +1153,8 @@ async function saveRow(){
         showToast('⚠️ تغییر روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
         return;
       }
-      await pushLog('edit', `${currentUser} مورد سفارش ${orderNo} را ویرایش کرد`);
+      const diffText = buildDiffText(beforeEdit, payload);
+      await pushLog('edit', `${currentUser} مورد سفارش ${orderNo} را ویرایش کرد — ${diffText}`);
       showToast('تغییرات ذخیره شد ✓');
     } else {
       const beforeCount = orders.length;
