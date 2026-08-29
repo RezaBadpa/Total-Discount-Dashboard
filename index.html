@@ -472,10 +472,10 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_status"><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
         </div>
         <div class="field"><label>وضعیت ایمیل</label>
-          <select id="f_email_status"><option value="ارسال شد - در حال بررسی">ارسال شد - در حال بررسی</option><option value="بررسی شد - تایید شده">بررسی شد - تایید شده</option></select>
+          <select id="f_email_status"><option value="">— نامشخص —</option><option value="ارسال شد - در حال بررسی">ارسال شد - در حال بررسی</option><option value="بررسی شد - تایید شده">بررسی شد - تایید شده</option></select>
         </div>
-        <div class="field"><label>تایید سرپرست صدور</label><select id="f_supervisor"><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field"><label>تایید مدیر ارشد</label><select id="f_manager"><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>تایید سرپرست صدور</label><select id="f_supervisor"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>تایید مدیر ارشد</label><select id="f_manager"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
         <div class="field full"><label>شرح مغایرت (خلاصه)</label><input id="f_issue"></div>
         <div class="field full"><label>نتیجه بررسی سلر (سفارش الحاقیه یا تیکت)</label><input id="f_seller_result"></div>
         <div class="field full"><label>نتیجه بررسی تیم صدور الحاقیه (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
@@ -1100,9 +1100,9 @@ function openAddModal(){
   document.getElementById('f_agent').value = '';
   document.getElementById('f_shift').value = 'صبح';
   document.getElementById('f_status').value = 'در انتظار تخفیف';
-  document.getElementById('f_email_status').value = 'ارسال شد - در حال بررسی';
-  document.getElementById('f_supervisor').value = 'عدم تایید';
-  document.getElementById('f_manager').value = 'عدم تایید';
+  document.getElementById('f_email_status').value = '';
+  document.getElementById('f_supervisor').value = '';
+  document.getElementById('f_manager').value = '';
   document.getElementById('editModalOverlay').classList.add('show');
 }
 function openEditModal(id){
@@ -1119,9 +1119,9 @@ function openEditModal(id){
   document.getElementById('f_shift').value = o.shift||'صبح';
   document.getElementById('f_amount').value = o.amount ? Number(o.amount).toLocaleString('en-US') : '';
   document.getElementById('f_status').value = normStatus(o.status)||'در انتظار تخفیف';
-  document.getElementById('f_email_status').value = o.email_status || 'ارسال شد - در حال بررسی';
-  document.getElementById('f_supervisor').value = o.supervisor_approval||'عدم تایید';
-  document.getElementById('f_manager').value = o.manager_approval||'عدم تایید';
+  document.getElementById('f_email_status').value = o.email_status || '';
+  document.getElementById('f_supervisor').value = o.supervisor_approval||'';
+  document.getElementById('f_manager').value = o.manager_approval||'';
   document.getElementById('f_issue').value = o.issue||'';
   document.getElementById('f_seller_result').value = o.seller_result||'';
   document.getElementById('f_issuance_result').value = o.issuance_result||'';
