@@ -842,7 +842,7 @@ function computeStats(list){
   const total = list.length;
   const totalAmount = list.reduce((s,o)=>s+(Number(o.amount)||0),0);
   const discounted = list.filter(o=>normStatus(o.status)==='تخفیف شد');
-  const notDiscounted = list.filter(o=>normStatus(o.status)!=='تخفیف شد');
+  const notDiscounted = list.filter(o=>normStatus(o.status)==='در انتظار تخفیف');
   const discAmount = discounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
   const notDiscAmount = notDiscounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
   const pct = total ? (discounted.length/total*100) : 0;
@@ -873,7 +873,7 @@ function renderStats(){
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-ic bg-pink c-pink">⏳</div></div>
-      <div class="stat-label">سفارشات تخفیف‌نشده</div>
+      <div class="stat-label">سفارشات در انتظار تخفیف</div>
       <div class="stat-value">${s.notDiscounted.length.toLocaleString('en-US')}</div>
       <div class="stat-sub">${fmt(s.notDiscAmount)} ریال</div>
     </div>
