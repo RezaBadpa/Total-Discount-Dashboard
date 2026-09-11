@@ -482,21 +482,6 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
   </div>
 </div>
 
-<div class="modal-overlay" id="deleteModalOverlay">
-  <div class="modal small">
-    <div class="modal-body">
-      <div class="warn-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="confirm-text">آیا مطمئن هستید می‌خواهید مورد شماره سفارش <b id="delOrderNo"></b> را حذف کنید؟<br>این عملیات قابل بازگشت نیست.</div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn ghost" onclick="closeModal('deleteModalOverlay')">انصراف</button>
-      <button class="btn" style="background:var(--red);border:none;color:#fff;" onclick="confirmDelete()">بله، حذف کن</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="logModalOverlay">
   <div class="modal">
     <div class="modal-head"><h3>لاگ تغییرات تیم</h3><button onclick="closeModal('logModalOverlay')">✕</button></div>
@@ -826,6 +811,8 @@ function applyFilters(){
     }
     return true;
   });
+  // جدیدترین سفارش (آخرین سطر ثبت‌شده در شیت) اول نمایش داده شود
+  filtered.sort((a,b)=> b.id - a.id);
   currentPage = 1;
   document.getElementById('resultCount').textContent = `${filtered.length.toLocaleString('en-US')} مورد از ${orders.length.toLocaleString('en-US')} مورد نمایش داده می‌شود`;
   renderAll();
@@ -981,7 +968,6 @@ function renderTable(){
       <td>
         <div class="row-actions">
           <button class="edit" title="ویرایش" onclick="openEditModal(${o.id})">✏️</button>
-          <button class="del" title="حذف" onclick="askDelete(${o.id})">🗑️</button>
         </div>
       </td>
     </tr>
@@ -1134,33 +1120,6 @@ async function saveRow(){
     applyFilters();
   }catch(e){
     showToast('ذخیره ناموفق بود: ' + e.message, true);
-  }
-}
-function askDelete(id){
-  pendingDeleteId = id;
-  const o = orders.find(x=>x.id===id);
-  document.getElementById('delOrderNo').textContent = o ? o.order_no : '';
-  document.getElementById('deleteModalOverlay').classList.add('show');
-}
-async function confirmDelete(){
-  if(pendingDeleteId==null) return;
-  const o = orders.find(x=>x.id===pendingDeleteId);
-  try{
-    await gsCall('delete', { id: pendingDeleteId });
-    await loadOrders(true);
-    const stillThere = orders.find(x=>x.id===pendingDeleteId);
-    if(stillThere){
-      showToast('⚠️ حذف روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
-      return;
-    }
-    await pushLog('del', `${currentUser} مورد سفارش ${o?o.order_no:''} را حذف کرد`);
-    closeModal('deleteModalOverlay');
-    showToast('مورد حذف شد ✓');
-    pendingDeleteId = null;
-    populateFilterOptions();
-    applyFilters();
-  }catch(e){
-    showToast('حذف ناموفق بود: ' + e.message, true);
   }
 }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
