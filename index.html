@@ -223,11 +223,11 @@ tbody tr.expanded-row td{border-bottom:none;}
 .row-actions .del:hover{color:var(--red);border-color:var(--red);}
 .row-actions .edit:hover{color:var(--blue);border-color:var(--blue);}
 .row-actions .info:hover{color:var(--green);border-color:var(--green);}
-.desc-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,230,174,0.3);padding:6px 12px;border-radius:999px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.15s;}
-.desc-toggle-btn:hover{background:rgba(34,230,174,0.22);}
+.desc-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:999px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;}
+.desc-toggle-btn:hover{color:var(--green);border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim);}
 .desc-toggle-btn .chev{transition:transform .2s;}
 .desc-toggle-btn.open .chev{transform:rotate(180deg);}
-.desc-toggle-btn.open{background:rgba(34,230,174,0.22);}
+.desc-toggle-btn.open{color:var(--green);border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim);}
 .amount-cell{font-weight:700;font-variant-numeric:tabular-nums;}
 
 .pagination{display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px;}
@@ -310,9 +310,9 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </div>
     <h2>ورود به داشبورد</h2>
-    <p>این داشبورد محدود به اعضای تیم است. لطفاً نام خودتان و رمز دسترسی تیم را وارد کنید تا واردشوید و تغییرات شما با نامتان ثبت شود.</p>
-    <input id="gateName" placeholder="نام شما (برای ثبت در لاگ تغییرات)" />
-    <input id="gatePass" type="password" placeholder="رمز دسترسی تیم" />
+    <p>این داشبورد محدود به اعضای تیم است. لطفاً نام‌کاربری و رمز عبور اختصاصی خودتان را وارد کنید.</p>
+    <input id="gateName" placeholder="نام کاربری" autocomplete="username" />
+    <input id="gatePass" type="password" placeholder="رمز عبور" autocomplete="current-password" />
     <div class="err" id="gateErr"></div>
     <button class="gate-btn" onclick="tryEnter()">ورود به داشبورد</button>
   </div>
@@ -512,6 +512,18 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div id="agentChipsWrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
         <div class="desc" style="margin-top:10px;">فقط مواردی که خودتان از همین‌جا اضافه کرده‌اید قابل حذف‌اند — شرکت‌ها/نمایندگانی که در سفارش‌های واقعی ثبت شده‌اند همیشه در لیست باقی می‌مانند.</div>
       </div>
+
+      <div class="settings-row" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:16px;flex-direction:column;align-items:stretch;">
+        <div class="lbl" style="margin-bottom:10px;">مدیریت کاربران داشبورد</div>
+        <div id="usersListWrap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="newUserUsername" placeholder="نام‌کاربری" style="flex:1;min-width:110px;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;direction:ltr;text-align:left;">
+          <input id="newUserPassword" placeholder="رمز عبور" style="flex:1;min-width:110px;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;direction:ltr;text-align:left;">
+          <input id="newUserDisplay" placeholder="نام نمایشی (اختیاری)" style="flex:1;min-width:110px;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
+        </div>
+        <div style="text-align:left;margin-top:8px;"><button class="btn primary" onclick="addUserAccount()">افزودن کاربر</button></div>
+        <div class="desc" style="margin-top:10px;">رمزها به‌صورت متن ساده در تب «Users» گوگل‌شیت ذخیره می‌شوند — فقط خودتان و افرادی که به خودِ شیت دسترسی دارند آن را می‌بینند.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -648,36 +660,52 @@ async function gsGetLogs(){
 }
 async function gsSetConfig(key, value){ return gsCall('setConfig', { key, value }); }
 async function gsAddLog(user, action, text){ return gsCall('addLog', { user, logAction:action, text }); }
+async function gsLogin(username, password){
+  const url = GS_URL + '?action=login&username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password) + '&token=' + encodeURIComponent(GS_TOKEN);
+  const res = await fetch(url, { method:'GET' });
+  return await res.json();
+}
+async function gsListUsers(){
+  const url = GS_URL + '?action=users&token=' + encodeURIComponent(GS_TOKEN);
+  const res = await fetch(url, { method:'GET' });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'خطا در دریافت لیست کاربران');
+  return json.users || [];
+}
 
 /* ---------------- init ---------------- */
 async function init(){
-  const savedName = localGet(STORE_ME);
-  if(savedName) document.getElementById('gateName').value = savedName;
+  const savedUsername = localGet(STORE_ME);
+  if(savedUsername) document.getElementById('gateName').value = savedUsername;
   try{
     window.__cfg = await gsGetConfig();
   }catch(e){
-    window.__cfg = { pass: null };
+    window.__cfg = {};
     document.getElementById('gateErr').textContent = 'اتصال اولیه به گوگل‌شیت برقرار نشد. صفحه را رفرش کنید.';
   }
 }
 init();
 
 async function tryEnter(){
-  const name = document.getElementById('gateName').value.trim();
+  const username = document.getElementById('gateName').value.trim();
   const pass = document.getElementById('gatePass').value.trim();
   const errBox = document.getElementById('gateErr');
-  if(!name){ errBox.textContent = 'لطفاً نام خود را وارد کنید.'; return; }
-  if(!window.__cfg || window.__cfg.pass === null || window.__cfg.pass === undefined){
-    try{ window.__cfg = await gsGetConfig(); }
-    catch(e){ errBox.textContent = 'اتصال به گوگل‌شیت برقرار نشد. صفحه را رفرش کنید.'; return; }
+  if(!username){ errBox.textContent = 'لطفاً نام‌کاربری را وارد کنید.'; return; }
+  if(!pass){ errBox.textContent = 'لطفاً رمز عبور را وارد کنید.'; return; }
+  let result;
+  try{
+    result = await gsLogin(username, pass);
+  }catch(e){
+    errBox.textContent = 'اتصال به گوگل‌شیت برقرار نشد. صفحه را رفرش کنید.';
+    return;
   }
-  if(pass !== window.__cfg.pass){ errBox.textContent = 'رمز دسترسی اشتباه است.'; return; }
+  if(!result.ok){ errBox.textContent = result.error || 'نام‌کاربری یا رمز عبور اشتباه است.'; return; }
   errBox.textContent = '';
-  currentUser = name;
-  localSet(STORE_ME, name);
+  currentUser = result.user.displayName || result.user.username;
+  localSet(STORE_ME, username);
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  document.getElementById('whoAmI').textContent = name;
+  document.getElementById('whoAmI').textContent = currentUser;
   await bootDashboard();
 }
 
@@ -1133,6 +1161,7 @@ function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 /* ---------------- settings ---------------- */
 function openSettings(){
   renderManageLists();
+  renderUsersList();
   document.getElementById('settingsModalOverlay').classList.add('show');
 }
 async function logout(){
@@ -1141,6 +1170,52 @@ async function logout(){
   document.getElementById('gatePass').value = '';
   document.getElementById('gateErr').textContent = '';
   currentUser = '';
+}
+async function renderUsersList(){
+  const wrap = document.getElementById('usersListWrap');
+  wrap.innerHTML = '<div style="color:var(--muted2);font-size:12px;">در حال بارگذاری...</div>';
+  try{
+    const users = await gsListUsers();
+    wrap.innerHTML = users.length
+      ? users.map(u=>`
+        <div class="list-chip" style="justify-content:space-between;width:100%;">
+          <span>${esc(u.displayName)} <span style="color:var(--muted2);">(${esc(u.username)})</span></span>
+          <button onclick="removeUserAccount('${esc(u.username).replace(/'/g,"\\'")}')" title="حذف">✕</button>
+        </div>`).join('')
+      : '<div style="color:var(--muted2);font-size:12px;">کاربری ثبت نشده</div>';
+  }catch(e){
+    wrap.innerHTML = '<div style="color:var(--red);font-size:12px;">خطا در بارگذاری لیست کاربران</div>';
+  }
+}
+async function addUserAccount(){
+  const username = document.getElementById('newUserUsername').value.trim();
+  const password = document.getElementById('newUserPassword').value.trim();
+  const displayName = document.getElementById('newUserDisplay').value.trim();
+  if(!username || !password){ showToast('نام‌کاربری و رمز عبور الزامی است', true); return; }
+  try{
+    await gsCall('addUser', { username, password, displayName });
+    const users = await gsListUsers();
+    if(!users.some(u=>u.username.toLowerCase()===username.toLowerCase())){
+      showToast('⚠️ افزودن ناموفق بود (شاید این نام‌کاربری قبلاً وجود داشته)', true);
+    } else {
+      document.getElementById('newUserUsername').value = '';
+      document.getElementById('newUserPassword').value = '';
+      document.getElementById('newUserDisplay').value = '';
+      showToast('کاربر اضافه شد ✓');
+    }
+    renderUsersList();
+  }catch(e){
+    showToast('افزودن ناموفق بود: ' + e.message, true);
+  }
+}
+async function removeUserAccount(username){
+  try{
+    await gsCall('removeUser', { username });
+    showToast('کاربر حذف شد ✓');
+    renderUsersList();
+  }catch(e){
+    showToast('حذف ناموفق بود: ' + e.message, true);
+  }
 }
 function renderManageLists(){
   const companyWrap = document.getElementById('companyChipsWrap');
