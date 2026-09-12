@@ -465,13 +465,10 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div class="field"><label>وضعیت سفارش</label>
           <select id="f_status"><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
         </div>
-        <div class="field"><label>وضعیت ایمیل</label>
-          <select id="f_email_status"><option value="">— نامشخص —</option><option value="ارسال شد - در حال بررسی">ارسال شد - در حال بررسی</option><option value="بررسی شد - تایید شده">بررسی شد - تایید شده</option></select>
-        </div>
-        <div class="field"><label>تایید سرپرست صدور</label><select id="f_supervisor"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field"><label>تایید مدیر ارشد</label><select id="f_manager"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>بررسی سعید گشتی</label><select id="f_supervisor"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>بررسی بهاره اشرفی</label><select id="f_manager"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
         <div class="field full"><label>شرح مغایرت (خلاصه)</label><input id="f_issue"></div>
-        <div class="field full"><label>نتیجه بررسی سلر (سفارش الحاقیه یا تیکت)</label><input id="f_seller_result"></div>
+        <div class="field full"><label>کانال ورودی (سفارش الحاقیه یا تیکت)</label><input id="f_seller_result"></div>
         <div class="field full"><label>نتیجه بررسی تیم صدور الحاقیه (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
       </div>
     </div>
@@ -559,7 +556,6 @@ let editingId = null;
 const STORE_ME = 'ozaki_disc_myname_v1'; // localStorage — این‌جا یک وب‌سایت واقعی است، نه Artifact
 let extraCompanies = [];
 let extraAgents = [];
-const EMAIL_STATUS_OPTIONS = ['ارسال شد - در حال بررسی', 'بررسی شد - تایید شده'];
 
 // ============ این دو مقدار را بعد از publish کردن Apps Script خودتان جایگزین کنید ============
 const GS_URL = 'https://script.google.com/macros/s/AKfycbwItCa1l7wPZvSF_AEM4WxyRGrFnp6rBdlTipu5hx1QlAMEnKu-qlG-EoN9zezkWOxaaQ/exec';
@@ -576,9 +572,9 @@ function formatAmountInput(el){
 }
 const FIELD_LABELS = {
   order_no: 'شماره سفارش', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ',
-  issue: 'شرح مغایرت', seller_result: 'نتیجه بررسی سلر', issuance_result: 'نتیجه بررسی صدور',
-  packagei: 'پکیجی', amount: 'مبلغ', shift: 'شیفت', email_status: 'وضعیت ایمیل',
-  supervisor_approval: 'تایید سرپرست', manager_approval: 'تایید مدیر', status: 'وضعیت سفارش'
+  issue: 'شرح مغایرت', seller_result: 'کانال ورودی', issuance_result: 'نتیجه بررسی صدور',
+  packagei: 'پکیجی', amount: 'مبلغ', shift: 'شیفت',
+  supervisor_approval: 'بررسی سعید گشتی', manager_approval: 'بررسی بهاره اشرفی', status: 'وضعیت سفارش'
 };
 function buildDiffText(oldObj, payload){
   const parts = [];
@@ -595,7 +591,7 @@ function orderMatchesPayload(row, payload){
   // فیلد 'date' به‌خاطر محدودیت «Column type» گوگل‌شیت هیچ‌وقت نوشته نمی‌شود؛
   // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
   // کل ذخیره‌سازی «ناموفق» گزارش شود.
-  const fields = ['order_no','company','agent','issue','seller_result','issuance_result','packagei','shift','email_status','supervisor_approval','manager_approval'];
+  const fields = ['order_no','company','agent','issue','seller_result','issuance_result','packagei','shift','supervisor_approval','manager_approval'];
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
@@ -811,8 +807,15 @@ function applyFilters(){
     }
     return true;
   });
-  // جدیدترین سفارش (آخرین سطر ثبت‌شده در شیت) اول نمایش داده شود
-  filtered.sort((a,b)=> b.id - a.id);
+  // اولویت نمایش بر اساس وضعیت: در انتظار تخفیف، در انتظار پرداخت، تخفیف شد، پرداخت شد
+  // و در هر گروه، جدیدترین سفارش (آخرین سطر ثبت‌شده در شیت) اول نمایش داده شود
+  const STATUS_PRIORITY = { 'در انتظار تخفیف':0, 'در انتظار پرداخت':1, 'تخفیف شد':2, 'پرداخت شد':3 };
+  filtered.sort((a,b)=>{
+    const pa = STATUS_PRIORITY[normStatus(a.status)] ?? 99;
+    const pb = STATUS_PRIORITY[normStatus(b.status)] ?? 99;
+    if(pa !== pb) return pa - pb;
+    return b.id - a.id;
+  });
   currentPage = 1;
   document.getElementById('resultCount').textContent = `${filtered.length.toLocaleString('en-US')} مورد از ${orders.length.toLocaleString('en-US')} مورد نمایش داده می‌شود`;
   renderAll();
@@ -977,17 +980,15 @@ function renderTable(){
           <h4>شرح مغایرت</h4>
           <div>${esc(o.issue)||'—'}</div>
           <div class="row2">
-            <div><h4>نتیجه بررسی سلر (سفارش الحاقیه یا تیکت)</h4><div>${esc(o.seller_result)||'—'}</div></div>
+            <div><h4>کانال ورودی (سفارش الحاقیه یا تیکت)</h4><div>${esc(o.seller_result)||'—'}</div></div>
             <div><h4>پکیجی</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
           </div>
           <h4 style="margin-top:12px;">نتیجه بررسی تیم صدور الحاقیه</h4>
           <div>${esc(o.issuance_result)||'—'}</div>
           <div class="row2">
-            <div><h4>تایید سرپرست صدور</h4><div>${esc(o.supervisor_approval)||'—'}</div></div>
-            <div><h4>تایید مدیر ارشد</h4><div>${esc(o.manager_approval)||'—'}</div></div>
+            <div><h4>بررسی سعید گشتی</h4><div>${esc(o.supervisor_approval)||'—'}</div></div>
+            <div><h4>بررسی بهاره اشرفی</h4><div>${esc(o.manager_approval)||'—'}</div></div>
           </div>
-          <h4 style="margin-top:12px;">وضعیت ایمیل</h4>
-          <div>${esc(o.email_status)||'—'}</div>
         </div>
       </td>
     </tr>`;
@@ -1042,7 +1043,6 @@ function openAddModal(){
   document.getElementById('f_agent').value = '';
   document.getElementById('f_shift').value = 'صبح';
   document.getElementById('f_status').value = 'در انتظار تخفیف';
-  document.getElementById('f_email_status').value = '';
   document.getElementById('f_supervisor').value = '';
   document.getElementById('f_manager').value = '';
   document.getElementById('editModalOverlay').classList.add('show');
@@ -1061,7 +1061,6 @@ function openEditModal(id){
   document.getElementById('f_shift').value = o.shift||'صبح';
   document.getElementById('f_amount').value = o.amount ? Number(o.amount).toLocaleString('en-US') : '';
   document.getElementById('f_status').value = normStatus(o.status)||'در انتظار تخفیف';
-  document.getElementById('f_email_status').value = o.email_status || '';
   document.getElementById('f_supervisor').value = o.supervisor_approval||'';
   document.getElementById('f_manager').value = o.manager_approval||'';
   document.getElementById('f_issue').value = o.issue||'';
@@ -1072,6 +1071,14 @@ function openEditModal(id){
 async function saveRow(){
   const orderNo = document.getElementById('f_order_no').value.trim();
   if(!orderNo){ showToast('شماره سفارش الزامی است', true); return; }
+  // بررسی تکراری نبودن شماره سفارش (فقط هنگام افزودن مورد جدید، نه ویرایش)
+  if(!editingId){
+    const dup = orders.find(o=> String(o.order_no||'').trim() === orderNo);
+    if(dup){
+      showToast(`⚠️ این سفارش تکراری است — شماره سفارش ${orderNo} قبلاً ثبت شده`, true);
+      return;
+    }
+  }
   const payload = {
     order_no: orderNo,
     line: 'خودرویی - ثالث',
@@ -1084,7 +1091,6 @@ async function saveRow(){
     packagei: document.getElementById('f_packagei').value.trim(),
     amount: Number(document.getElementById('f_amount').value.replace(/,/g,''))||0,
     shift: document.getElementById('f_shift').value,
-    email_status: document.getElementById('f_email_status').value.trim(),
     supervisor_approval: document.getElementById('f_supervisor').value,
     manager_approval: document.getElementById('f_manager').value,
     status: document.getElementById('f_status').value,
@@ -1203,8 +1209,8 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','شرح مغایرت','نتیجه بررسی سلر','نتیجه بررسی تیم صدور الحاقیه','پکیجی','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','وضعیت ایمیل','تایید سرپرست صدور','تایید مدیر ارشد','وضعیت سفارش'];
-  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.issuance_result,o.packagei,o.amount,o.shift,o.email_status,o.supervisor_approval,o.manager_approval,normStatus(o.status)]);
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','شرح مغایرت','کانال ورودی (سفارش الحاقیه یا تیکت)','نتیجه بررسی تیم صدور الحاقیه','پکیجی','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','بررسی سعید گشتی','بررسی بهاره اشرفی','وضعیت سفارش'];
+  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.issuance_result,o.packagei,o.amount,o.shift,o.supervisor_approval,o.manager_approval,normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
     return /[",\n]/.test(s) ? `"${s}"` : s;
