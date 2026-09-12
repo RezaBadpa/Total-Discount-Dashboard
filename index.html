@@ -513,16 +513,20 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div class="desc" style="margin-top:10px;">فقط مواردی که خودتان از همین‌جا اضافه کرده‌اید قابل حذف‌اند — شرکت‌ها/نمایندگانی که در سفارش‌های واقعی ثبت شده‌اند همیشه در لیست باقی می‌مانند.</div>
       </div>
 
-      <div class="settings-row" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:16px;flex-direction:column;align-items:stretch;">
-        <div class="lbl" style="margin-bottom:10px;">مدیریت کاربران داشبورد</div>
+      <div id="usersManageSection" class="settings-row" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:16px;flex-direction:column;align-items:stretch;">
+        <div class="lbl" style="margin-bottom:10px;">مدیریت کاربران داشبورد (فقط ادمین)</div>
         <div id="usersListWrap" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <input id="newUserUsername" placeholder="نام‌کاربری" style="flex:1;min-width:110px;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;direction:ltr;text-align:left;">
           <input id="newUserPassword" placeholder="رمز عبور" style="flex:1;min-width:110px;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;direction:ltr;text-align:left;">
           <input id="newUserDisplay" placeholder="نام نمایشی (اختیاری)" style="flex:1;min-width:110px;background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
+          <select id="newUserRole" style="background:#0a0f15;border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:8px;font-family:inherit;font-size:13px;">
+            <option value="member">کاربر عادی</option>
+            <option value="admin">ادمین</option>
+          </select>
         </div>
         <div style="text-align:left;margin-top:8px;"><button class="btn primary" onclick="addUserAccount()">افزودن کاربر</button></div>
-        <div class="desc" style="margin-top:10px;">رمزها به‌صورت متن ساده در تب «Users» گوگل‌شیت ذخیره می‌شوند — فقط خودتان و افرادی که به خودِ شیت دسترسی دارند آن را می‌بینند.</div>
+        <div class="desc" style="margin-top:10px;">رمزها به‌صورت هش‌شده (غیرقابل‌خواندن) در تب «Users» گوگل‌شیت ذخیره می‌شوند. فقط کاربر با نقش ادمین می‌تواند از همین بخش کاربر اضافه یا حذف کند.</div>
       </div>
     </div>
   </div>
@@ -558,6 +562,8 @@ const AGENT_COLORS = ['#22e6ae','#3ab7ff','#a06bff','#ffb648','#ff5c93','#ffd23f
 let orders = [];
 let auditLog = [];
 let currentUser = '';
+let currentUsername = '';
+let currentUserRole = 'member';
 let filtered = [];
 let currentPage = 1;
 const PAGE_SIZE = 25;
@@ -702,6 +708,8 @@ async function tryEnter(){
   if(!result.ok){ errBox.textContent = result.error || 'نام‌کاربری یا رمز عبور اشتباه است.'; return; }
   errBox.textContent = '';
   currentUser = result.user.displayName || result.user.username;
+  currentUsername = result.user.username;
+  currentUserRole = result.user.role || 'member';
   localSet(STORE_ME, username);
   document.getElementById('gate').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -1161,7 +1169,13 @@ function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 /* ---------------- settings ---------------- */
 function openSettings(){
   renderManageLists();
-  renderUsersList();
+  const usersSection = document.getElementById('usersManageSection');
+  if(currentUserRole === 'admin'){
+    usersSection.style.display = '';
+    renderUsersList();
+  } else {
+    usersSection.style.display = 'none';
+  }
   document.getElementById('settingsModalOverlay').classList.add('show');
 }
 async function logout(){
@@ -1170,6 +1184,8 @@ async function logout(){
   document.getElementById('gatePass').value = '';
   document.getElementById('gateErr').textContent = '';
   currentUser = '';
+  currentUsername = '';
+  currentUserRole = 'member';
 }
 async function renderUsersList(){
   const wrap = document.getElementById('usersListWrap');
@@ -1179,7 +1195,7 @@ async function renderUsersList(){
     wrap.innerHTML = users.length
       ? users.map(u=>`
         <div class="list-chip" style="justify-content:space-between;width:100%;">
-          <span>${esc(u.displayName)} <span style="color:var(--muted2);">(${esc(u.username)})</span></span>
+          <span>${esc(u.displayName)} <span style="color:var(--muted2);">(${esc(u.username)}${u.role==='admin' ? ' · ادمین' : ''})</span></span>
           <button onclick="removeUserAccount('${esc(u.username).replace(/'/g,"\\'")}')" title="حذف">✕</button>
         </div>`).join('')
       : '<div style="color:var(--muted2);font-size:12px;">کاربری ثبت نشده</div>';
@@ -1191,16 +1207,18 @@ async function addUserAccount(){
   const username = document.getElementById('newUserUsername').value.trim();
   const password = document.getElementById('newUserPassword').value.trim();
   const displayName = document.getElementById('newUserDisplay').value.trim();
+  const role = document.getElementById('newUserRole').value;
   if(!username || !password){ showToast('نام‌کاربری و رمز عبور الزامی است', true); return; }
   try{
-    await gsCall('addUser', { username, password, displayName });
+    await gsCall('addUser', { requester: currentUsername, username, password, displayName, role });
     const users = await gsListUsers();
     if(!users.some(u=>u.username.toLowerCase()===username.toLowerCase())){
-      showToast('⚠️ افزودن ناموفق بود (شاید این نام‌کاربری قبلاً وجود داشته)', true);
+      showToast('⚠️ افزودن ناموفق بود (نام تکراری است یا دسترسی ادمین ندارید)', true);
     } else {
       document.getElementById('newUserUsername').value = '';
       document.getElementById('newUserPassword').value = '';
       document.getElementById('newUserDisplay').value = '';
+      document.getElementById('newUserRole').value = 'member';
       showToast('کاربر اضافه شد ✓');
     }
     renderUsersList();
@@ -1210,7 +1228,7 @@ async function addUserAccount(){
 }
 async function removeUserAccount(username){
   try{
-    await gsCall('removeUser', { username });
+    await gsCall('removeUser', { requester: currentUsername, username });
     showToast('کاربر حذف شد ✓');
     renderUsersList();
   }catch(e){
