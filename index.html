@@ -211,6 +211,7 @@ tbody tr.expanded-row td{border-bottom:none;}
 .pill.discounted{background:var(--green-dim);color:var(--green);}
 .pill.wait-discount{background:var(--orange-dim);color:var(--orange);}
 .pill.wait-pay{background:var(--pink-dim);color:var(--pink);}
+.pill.wait-training{background:rgba(160,107,255,0.14);color:var(--purple);}
 .shift-ic{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px;}
 .shift-ic.sun{color:var(--yellow);}
 .shift-ic.moon{color:var(--blue);}
@@ -418,9 +419,9 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <tr>
             <th>ردیف</th>
             <th>شماره سفارش</th>
+            <th>رشته بیمه</th>
             <th>شرکت بیمه</th>
             <th>نماینده</th>
-            <th>تاریخ</th>
             <th>شیفت</th>
             <th>مبلغ (ریال)</th>
             <th>وضعیت سفارش</th>
@@ -463,13 +464,15 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         </div>
         <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this)"></div>
         <div class="field"><label>وضعیت سفارش</label>
-          <select id="f_status"><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
+          <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
         </div>
-        <div class="field"><label>بررسی سعید گشتی</label><select id="f_supervisor"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field"><label>بررسی بهاره اشرفی</label><select id="f_manager"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field full"><label>شرح مغایرت (خلاصه)</label><input id="f_issue"></div>
+        <div class="field"><label>بررسی تیم آموزش</label><select id="f_training"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>بررسی سرپرست ارشد</label><select id="f_seniorSupervisor"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>بررسی مدیریت صدور</label><select id="f_issuanceMgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field"><label>بررسی مدیریت ارشد</label><select id="f_seniorMgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        <div class="field full"><label>نوع مغایرت (شرح خلاصه)</label><input id="f_issue"></div>
         <div class="field full"><label>کانال ورودی (سفارش الحاقیه یا تیکت)</label><input id="f_seller_result"></div>
-        <div class="field full"><label>نتیجه بررسی تیم صدور الحاقیه (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
+        <div class="field full"><label>توضیحات (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
       </div>
     </div>
     <div class="modal-foot">
@@ -545,17 +548,21 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
 
 <script>
 const MONTHS_FA = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+// ترتیب اولویت وضعیت‌ها در نمایش و منطق پیش‌فرض؛ هر وضعیت جدید باید همین‌جا اضافه شود
+const STATUS_LIST = ['در انتظار تایید آموزش','در انتظار تخفیف','در انتظار پرداخت','تخفیف شد','پرداخت شد'];
 const STATUS_COLORS = {
   'پرداخت شد': '#3ab7ff',
   'تخفیف شد': '#22e6ae',
   'در انتظار تخفیف': '#ffb648',
   'در انتظار پرداخت': '#ff5c93',
+  'در انتظار تایید آموزش': '#a06bff',
 };
 const STATUS_CLASS = {
   'پرداخت شد': 'paid',
   'تخفیف شد': 'discounted',
   'در انتظار تخفیف': 'wait-discount',
   'در انتظار پرداخت': 'wait-pay',
+  'در انتظار تایید آموزش': 'wait-training',
 };
 const AGENT_COLORS = ['#22e6ae','#3ab7ff','#a06bff','#ffb648','#ff5c93','#ffd23f','#4dd0e1','#c084fc','#f472b6','#84cc16','#fb923c','#60a5fa'];
 
@@ -590,9 +597,10 @@ function formatAmountInput(el){
 }
 const FIELD_LABELS = {
   order_no: 'شماره سفارش', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ',
-  issue: 'شرح مغایرت', seller_result: 'کانال ورودی', issuance_result: 'نتیجه بررسی صدور',
+  issue: 'نوع مغایرت', seller_result: 'کانال ورودی', issuance_result: 'توضیحات',
   packagei: 'پکیجی', amount: 'مبلغ', shift: 'شیفت',
-  supervisor_approval: 'بررسی سعید گشتی', manager_approval: 'بررسی بهاره اشرفی', status: 'وضعیت سفارش'
+  training_review: 'بررسی تیم آموزش', senior_supervisor_review: 'بررسی سرپرست ارشد',
+  issuance_mgmt_review: 'بررسی مدیریت صدور', senior_mgmt_review: 'بررسی مدیریت ارشد', status: 'وضعیت سفارش'
 };
 function buildDiffText(oldObj, payload){
   const parts = [];
@@ -609,7 +617,7 @@ function orderMatchesPayload(row, payload){
   // فیلد 'date' به‌خاطر محدودیت «Column type» گوگل‌شیت هیچ‌وقت نوشته نمی‌شود؛
   // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
   // کل ذخیره‌سازی «ناموفق» گزارش شود.
-  const fields = ['order_no','company','agent','issue','seller_result','issuance_result','packagei','shift','supervisor_approval','manager_approval'];
+  const fields = ['order_no','company','agent','issue','seller_result','issuance_result','packagei','shift','training_review','senior_supervisor_review','issuance_mgmt_review','senior_mgmt_review'];
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
@@ -715,6 +723,7 @@ async function tryEnter(){
   document.getElementById('app').style.display = 'block';
   document.getElementById('whoAmI').textContent = currentUser;
   await bootDashboard();
+  await pushLog('login', `${currentUser} (نام‌کاربری: ${currentUsername}) وارد داشبورد شد`);
 }
 
 async function loadOrders(showErrToast){
@@ -792,7 +801,7 @@ function openLog(){
 function populateFilterOptions(){
   const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
   const agents = [...new Set([...orders.map(o=>o.agent), ...extraAgents].filter(Boolean))].sort();
-  const statuses = [...new Set(orders.map(o=>normStatus(o.status)).filter(Boolean))];
+  const statuses = STATUS_LIST;
   const shifts = [...new Set(orders.map(o=>o.shift).filter(Boolean))];
   fillSelect('fCompany', companies, 'همه شرکت‌های بیمه');
   fillSelect('fAgent', agents, 'همه نمایندگان');
@@ -843,12 +852,11 @@ function applyFilters(){
     }
     return true;
   });
-  // اولویت نمایش بر اساس وضعیت: در انتظار تخفیف، در انتظار پرداخت، تخفیف شد، پرداخت شد
+  // اولویت نمایش بر اساس وضعیت: در انتظار تایید آموزش، در انتظار تخفیف، در انتظار پرداخت، تخفیف شد، پرداخت شد
   // و در هر گروه، جدیدترین سفارش (آخرین سطر ثبت‌شده در شیت) اول نمایش داده شود
-  const STATUS_PRIORITY = { 'در انتظار تخفیف':0, 'در انتظار پرداخت':1, 'تخفیف شد':2, 'پرداخت شد':3 };
   filtered.sort((a,b)=>{
-    const pa = STATUS_PRIORITY[normStatus(a.status)] ?? 99;
-    const pb = STATUS_PRIORITY[normStatus(b.status)] ?? 99;
+    let pa = STATUS_LIST.indexOf(normStatus(a.status)); if(pa<0) pa = 99;
+    let pb = STATUS_LIST.indexOf(normStatus(b.status)); if(pb<0) pb = 99;
     if(pa !== pb) return pa - pb;
     return b.id - a.id;
   });
@@ -863,10 +871,12 @@ function computeStats(list){
   const totalAmount = list.reduce((s,o)=>s+(Number(o.amount)||0),0);
   const discounted = list.filter(o=>normStatus(o.status)==='تخفیف شد');
   const notDiscounted = list.filter(o=>normStatus(o.status)==='در انتظار تخفیف');
+  const waitTraining = list.filter(o=>normStatus(o.status)==='در انتظار تایید آموزش');
   const discAmount = discounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
   const notDiscAmount = notDiscounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const waitTrainingAmount = waitTraining.reduce((s,o)=>s+(Number(o.amount)||0),0);
   const pct = total ? (discounted.length/total*100) : 0;
-  return { total, totalAmount, discounted, notDiscounted, discAmount, notDiscAmount, pct };
+  return { total, totalAmount, discounted, notDiscounted, waitTraining, discAmount, notDiscAmount, waitTrainingAmount, pct };
 }
 
 function renderStats(){
@@ -884,6 +894,12 @@ function renderStats(){
       <div class="stat-label">مبلغ مغایرت کل سفارشات</div>
       <div class="stat-value">${fmt(s.totalAmount)}</div>
       <div class="stat-sub">ریال</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-ic bg-purple c-purple">🎓</div></div>
+      <div class="stat-label">در انتظار تایید آموزش</div>
+      <div class="stat-value">${s.waitTraining.length.toLocaleString('en-US')}</div>
+      <div class="stat-sub">${fmt(s.waitTrainingAmount)} ریال</div>
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-ic bg-green c-green">✅</div></div>
@@ -918,8 +934,7 @@ function renderComposition(){
   const bar = document.getElementById('compBar');
   const legend = document.getElementById('compLegend');
   bar.innerHTML=''; legend.innerHTML='';
-  const order = ['تخفیف شد','پرداخت شد','در انتظار تخفیف','در انتظار پرداخت'];
-  const keys = Object.keys(groups).sort((a,b)=> order.indexOf(a)-order.indexOf(b));
+  const keys = Object.keys(groups).sort((a,b)=> STATUS_LIST.indexOf(a)-STATUS_LIST.indexOf(b));
   keys.forEach(k=>{
     const amt = groups[k];
     const pct = total ? (amt/total*100) : 0;
@@ -992,9 +1007,9 @@ function renderTable(){
     <tr>
       <td>${(start+idx+1).toLocaleString('en-US')}</td>
       <td class="mono">${esc(o.order_no)}</td>
+      <td>${esc(o.line)}</td>
       <td>${esc(o.company)}</td>
       <td>${esc(o.agent)}</td>
-      <td class="mono">${esc(o.date)}</td>
       <td>${shiftIcon}</td>
       <td class="amount-cell">${fmt(o.amount)}</td>
       <td><span class="pill ${pillClass}">${esc(st)}</span></td>
@@ -1013,17 +1028,21 @@ function renderTable(){
     <tr class="desc-row" id="desc-${o.id}">
       <td colspan="10">
         <div class="desc-inner">
-          <h4>شرح مغایرت</h4>
-          <div>${esc(o.issue)||'—'}</div>
           <div class="row2">
-            <div><h4>کانال ورودی (سفارش الحاقیه یا تیکت)</h4><div>${esc(o.seller_result)||'—'}</div></div>
+            <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
             <div><h4>پکیجی</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
           </div>
-          <h4 style="margin-top:12px;">نتیجه بررسی تیم صدور الحاقیه</h4>
+          <h4 style="margin-top:12px;">نوع مغایرت (شرح خلاصه)</h4>
+          <div>${esc(o.issue)||'—'}</div>
+          <h4 style="margin-top:12px;">کانال ورودی (سفارش الحاقیه یا تیکت)</h4>
+          <div>${esc(o.seller_result)||'—'}</div>
+          <h4 style="margin-top:12px;">توضیحات (شرح کامل)</h4>
           <div>${esc(o.issuance_result)||'—'}</div>
           <div class="row2">
-            <div><h4>بررسی سعید گشتی</h4><div>${esc(o.supervisor_approval)||'—'}</div></div>
-            <div><h4>بررسی بهاره اشرفی</h4><div>${esc(o.manager_approval)||'—'}</div></div>
+            <div><h4>بررسی تیم آموزش</h4><div>${esc(o.training_review)||'—'}</div></div>
+            <div><h4>بررسی سرپرست ارشد</h4><div>${esc(o.senior_supervisor_review)||'—'}</div></div>
+            <div><h4>بررسی مدیریت صدور</h4><div>${esc(o.issuance_mgmt_review)||'—'}</div></div>
+            <div><h4>بررسی مدیریت ارشد</h4><div>${esc(o.senior_mgmt_review)||'—'}</div></div>
           </div>
         </div>
       </td>
@@ -1078,9 +1097,11 @@ function openAddModal(){
   document.getElementById('f_company').selectedIndex = 0;
   document.getElementById('f_agent').value = '';
   document.getElementById('f_shift').value = 'صبح';
-  document.getElementById('f_status').value = 'در انتظار تخفیف';
-  document.getElementById('f_supervisor').value = '';
-  document.getElementById('f_manager').value = '';
+  document.getElementById('f_status').value = 'در انتظار تایید آموزش';
+  document.getElementById('f_training').value = '';
+  document.getElementById('f_seniorSupervisor').value = '';
+  document.getElementById('f_issuanceMgmt').value = '';
+  document.getElementById('f_seniorMgmt').value = '';
   document.getElementById('editModalOverlay').classList.add('show');
 }
 function openEditModal(id){
@@ -1096,9 +1117,11 @@ function openEditModal(id){
   document.getElementById('f_date').value = o.date||'';
   document.getElementById('f_shift').value = o.shift||'صبح';
   document.getElementById('f_amount').value = o.amount ? Number(o.amount).toLocaleString('en-US') : '';
-  document.getElementById('f_status').value = normStatus(o.status)||'در انتظار تخفیف';
-  document.getElementById('f_supervisor').value = o.supervisor_approval||'';
-  document.getElementById('f_manager').value = o.manager_approval||'';
+  document.getElementById('f_status').value = normStatus(o.status)||'در انتظار تایید آموزش';
+  document.getElementById('f_training').value = o.training_review||'';
+  document.getElementById('f_seniorSupervisor').value = o.senior_supervisor_review||'';
+  document.getElementById('f_issuanceMgmt').value = o.issuance_mgmt_review||'';
+  document.getElementById('f_seniorMgmt').value = o.senior_mgmt_review||'';
   document.getElementById('f_issue').value = o.issue||'';
   document.getElementById('f_seller_result').value = o.seller_result||'';
   document.getElementById('f_issuance_result').value = o.issuance_result||'';
@@ -1127,8 +1150,10 @@ async function saveRow(){
     packagei: document.getElementById('f_packagei').value.trim(),
     amount: Number(document.getElementById('f_amount').value.replace(/,/g,''))||0,
     shift: document.getElementById('f_shift').value,
-    supervisor_approval: document.getElementById('f_supervisor').value,
-    manager_approval: document.getElementById('f_manager').value,
+    training_review: document.getElementById('f_training').value,
+    senior_supervisor_review: document.getElementById('f_seniorSupervisor').value,
+    issuance_mgmt_review: document.getElementById('f_issuanceMgmt').value,
+    senior_mgmt_review: document.getElementById('f_seniorMgmt').value,
     status: document.getElementById('f_status').value,
   };
   const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
@@ -1302,8 +1327,8 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','شرح مغایرت','کانال ورودی (سفارش الحاقیه یا تیکت)','نتیجه بررسی تیم صدور الحاقیه','پکیجی','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','بررسی سعید گشتی','بررسی بهاره اشرفی','وضعیت سفارش'];
-  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.issuance_result,o.packagei,o.amount,o.shift,o.supervisor_approval,o.manager_approval,normStatus(o.status)]);
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی (سفارش الحاقیه یا تیکت)','توضیحات (شرح کامل)','پکیجی','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','بررسی تیم آموزش','بررسی سرپرست ارشد','بررسی مدیریت صدور','بررسی مدیریت ارشد','وضعیت سفارش'];
+  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.issuance_result,o.packagei,o.amount,o.shift,o.training_review,o.senior_supervisor_review,o.issuance_mgmt_review,o.senior_mgmt_review,normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
     return /[",\n]/.test(s) ? `"${s}"` : s;
