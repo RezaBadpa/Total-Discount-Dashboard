@@ -108,10 +108,10 @@ h1.title .hl{color:var(--green);}
 
 /* ---------- Stat cards ---------- */
 .stats-grid{
-  display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;
 }
-@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:640px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:520px){.stats-grid{grid-template-columns:1fr;}}
 .stat-card{
   background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
   padding:18px;position:relative;overflow:hidden;
@@ -869,14 +869,14 @@ function applyFilters(){
 function computeStats(list){
   const total = list.length;
   const totalAmount = list.reduce((s,o)=>s+(Number(o.amount)||0),0);
-  const discounted = list.filter(o=>normStatus(o.status)==='تخفیف شد');
-  const notDiscounted = list.filter(o=>normStatus(o.status)==='در انتظار تخفیف');
-  const waitTraining = list.filter(o=>normStatus(o.status)==='در انتظار تایید آموزش');
-  const discAmount = discounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
-  const notDiscAmount = notDiscounted.reduce((s,o)=>s+(Number(o.amount)||0),0);
-  const waitTrainingAmount = waitTraining.reduce((s,o)=>s+(Number(o.amount)||0),0);
-  const pct = total ? (discounted.length/total*100) : 0;
-  return { total, totalAmount, discounted, notDiscounted, waitTraining, discAmount, notDiscAmount, waitTrainingAmount, pct };
+  const RESOLVED_STATUSES = ['تخفیف شد','پرداخت شد'];
+  const UNRESOLVED_STATUSES = ['در انتظار تایید آموزش','در انتظار تخفیف','در انتظار پرداخت'];
+  const resolved = list.filter(o=>RESOLVED_STATUSES.includes(normStatus(o.status)));
+  const unresolved = list.filter(o=>UNRESOLVED_STATUSES.includes(normStatus(o.status)));
+  const resolvedAmount = resolved.reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const unresolvedAmount = unresolved.reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const pct = total ? (resolved.length/total*100) : 0;
+  return { total, totalAmount, resolved, unresolved, resolvedAmount, unresolvedAmount, pct };
 }
 
 function renderStats(){
@@ -885,37 +885,25 @@ function renderStats(){
   grid.innerHTML = `
     <div class="stat-card">
       <div class="stat-top"><div class="stat-ic bg-blue c-blue">📦</div></div>
-      <div class="stat-label">تعداد کل سفارشات اعلام‌شده</div>
+      <div class="stat-label">کل سفارشات دارای مغایرت مالی</div>
       <div class="stat-value">${s.total.toLocaleString('en-US')}</div>
-      <div class="stat-sub">از مجموع ${orders.length.toLocaleString('en-US')} سفارش ثبت‌شده</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-top"><div class="stat-ic bg-orange c-orange">💰</div></div>
-      <div class="stat-label">مبلغ مغایرت کل سفارشات</div>
-      <div class="stat-value">${fmt(s.totalAmount)}</div>
-      <div class="stat-sub">ریال</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-top"><div class="stat-ic bg-purple c-purple">🎓</div></div>
-      <div class="stat-label">در انتظار تایید آموزش</div>
-      <div class="stat-value">${s.waitTraining.length.toLocaleString('en-US')}</div>
-      <div class="stat-sub">${fmt(s.waitTrainingAmount)} ریال</div>
+      <div class="stat-sub">${fmt(s.totalAmount)} ریال</div>
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-ic bg-green c-green">✅</div></div>
-      <div class="stat-label">سفارشات تخفیف‌شده</div>
-      <div class="stat-value">${s.discounted.length.toLocaleString('en-US')}</div>
-      <div class="stat-sub">${fmt(s.discAmount)} ریال</div>
+      <div class="stat-label">سفارشات رفع مغایرت شده</div>
+      <div class="stat-value">${s.resolved.length.toLocaleString('en-US')}</div>
+      <div class="stat-sub">${fmt(s.resolvedAmount)} ریال</div>
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-ic bg-pink c-pink">⏳</div></div>
-      <div class="stat-label">سفارشات در انتظار تخفیف</div>
-      <div class="stat-value">${s.notDiscounted.length.toLocaleString('en-US')}</div>
-      <div class="stat-sub">${fmt(s.notDiscAmount)} ریال</div>
+      <div class="stat-label">سفارشات رفع مغایرت نشده</div>
+      <div class="stat-value">${s.unresolved.length.toLocaleString('en-US')}</div>
+      <div class="stat-sub">${fmt(s.unresolvedAmount)} ریال</div>
     </div>
     <div class="stat-card">
       <div class="stat-top"><div class="stat-ic bg-purple c-purple">📈</div></div>
-      <div class="stat-label">درصد سفارشات تخفیف‌شده</div>
+      <div class="stat-label">درصد سفارشات رفع مغایرت شده</div>
       <div class="stat-value">${s.pct.toFixed(1)}٪</div>
       <div class="stat-sub">از کل موارد فیلترشده</div>
     </div>
