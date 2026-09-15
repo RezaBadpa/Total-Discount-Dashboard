@@ -45,9 +45,10 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 .wrap{max-width:1400px;margin:0 auto;padding:22px 22px 60px;position:relative;}
-.mascot-corner{position:absolute;left:-6px;top:4px;width:118px;height:auto;filter:drop-shadow(0 10px 22px rgba(0,0,0,0.5));pointer-events:none;user-select:none;z-index:1;}
-@media(max-width:900px){.mascot-corner{width:80px;}}
-@media(max-width:600px){.mascot-corner{display:none;}}
+.mascot-hero{width:150px;height:auto;filter:drop-shadow(0 10px 24px rgba(0,0,0,0.5));pointer-events:none;user-select:none;flex-shrink:0;}
+@media(max-width:900px){.mascot-hero{width:100px;}}
+@media(max-width:600px){.mascot-hero{width:70px;}}
+.hero-title-row{display:flex;align-items:center;justify-content:center;gap:18px;text-align:center;flex-wrap:wrap;}
 
 /* ---------- Gate ---------- */
 #gate{
@@ -400,6 +401,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
       <select class="filter-sel" id="fAgent" onchange="applyFilters()"><option value="">همه نمایندگان</option></select>
       <select class="filter-sel" id="fStatus" onchange="applyFilters()"><option value="">همه وضعیت‌ها</option></select>
       <select class="filter-sel" id="fShift" onchange="applyFilters()"><option value="">همه شیفت‌ها</option></select>
+      <select class="filter-sel" id="fErrorType" onchange="applyFilters()"><option value="">همه انواع خطا</option></select>
       <button class="clear-btn" onclick="clearFilters()">پاک‌کردن فیلترها</button>
     </div>
     <div class="result-count" id="resultCount"></div>
@@ -462,7 +464,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
     <div class="modal-body">
       <div class="form-grid">
         <div class="field"><label>شماره سفارش</label><input id="f_order_no"></div>
-        <div class="field"><label>سفارش پکیجی یا الحاقیه (جهت تخفیف)</label><input id="f_packagei"></div>
+        <div class="field"><label>پکیجی یا الحاقیه (جهت تخفیف)</label><input id="f_packagei"></div>
         <div class="field"><label>رشته بیمه</label>
           <select id="f_line">
             <option value="خودرویی - ثالث">خودرویی - ثالث</option>
@@ -476,25 +478,31 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div class="field"><label>نام نماینده</label>
           <select id="f_agent"></select>
         </div>
-        <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
         <div class="field"><label>شیفت صدور الحاقیه</label>
           <select id="f_shift"><option value="صبح">☀️ صبح</option><option value="عصر">🌙 عصر</option></select>
         </div>
+        <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
         <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this)"></div>
-        <div class="field"><label>نام کاربر صدور</label><input id="f_issuerUser"></div>
         <div class="field"><label>نوع خطا</label>
           <select id="f_errorType"><option value="">— نامشخص —</option><option value="بارمالی">بارمالی</option><option value="بدون بارمالی">بدون بارمالی</option></select>
         </div>
-        <div class="field"><label>وضعیت سفارش</label>
-          <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
-        </div>
-        <div class="field"><label>بررسی تیم آموزش</label><select id="f_training"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field"><label>بررسی سرپرست ارشد</label><select id="f_seniorSupervisor"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field"><label>بررسی مدیریت صدور</label><select id="f_issuanceMgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field"><label>بررسی مدیریت ارشد</label><select id="f_seniorMgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-        <div class="field full"><label>نوع مغایرت (شرح خلاصه)</label><input id="f_issue"></div>
+        <div class="field"><label>نام کاربر صدور</label><input id="f_issuerUser"></div>
         <div class="field full"><label>کانال ورودی (سفارش الحاقیه یا تیکت)</label><input id="f_seller_result"></div>
-        <div class="field full"><label>توضیحات (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
+        <div class="field full"><label>نوع مغایرت (شرح خلاصه)</label><input id="f_issue"></div>
+        <div class="field full"><label>توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
+
+        <div id="editOnlyFields" class="form-grid" style="grid-column:1/-1;padding:0;">
+          <div class="field full" style="border-top:1px dashed var(--border);padding-top:14px;margin-top:2px;">
+            <label style="color:var(--muted2);">فیلدهای زیر فقط هنگام ویرایش یک سفارش موجود قابل‌تغییرند</label>
+          </div>
+          <div class="field"><label>وضعیت سفارش</label>
+            <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
+          </div>
+          <div class="field"><label>بررسی تیم آموزش</label><select id="f_training"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+          <div class="field"><label>بررسی سرپرست ارشد</label><select id="f_seniorSupervisor"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+          <div class="field"><label>بررسی مدیریت صدور</label><select id="f_issuanceMgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+          <div class="field"><label>بررسی مدیریت ارشد</label><select id="f_seniorMgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -838,6 +846,7 @@ function openLog(){
 }
 
 /* ---------------- filters ---------------- */
+const ERROR_TYPE_LIST = ['بارمالی','بدون بارمالی'];
 function populateFilterOptions(){
   const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
   const agents = [...new Set([...orders.map(o=>o.agent), ...extraAgents].filter(Boolean))].sort();
@@ -847,6 +856,7 @@ function populateFilterOptions(){
   fillSelect('fAgent', agents, 'همه نمایندگان');
   fillSelect('fStatus', statuses, 'همه وضعیت‌ها');
   fillSelect('fShift', shifts, 'همه شیفت‌ها');
+  fillSelect('fErrorType', ERROR_TYPE_LIST, 'همه انواع خطا');
 }
 function populateFormSelects(){
   const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
@@ -872,6 +882,7 @@ function clearFilters(){
   document.getElementById('fAgent').value='';
   document.getElementById('fStatus').value='';
   document.getElementById('fShift').value='';
+  document.getElementById('fErrorType').value='';
   applyFilters();
 }
 function applyFilters(){
@@ -880,12 +891,14 @@ function applyFilters(){
   const fa = document.getElementById('fAgent').value;
   const fs = document.getElementById('fStatus').value;
   const fsh = document.getElementById('fShift').value;
+  const fet = document.getElementById('fErrorType').value;
 
   filtered = orders.filter(o=>{
     if(fc && o.company !== fc) return false;
     if(fa && o.agent !== fa) return false;
     if(fs && normStatus(o.status) !== fs) return false;
     if(fsh && o.shift !== fsh) return false;
+    if(fet && (o.error_type||'').trim() !== fet) return false;
     if(q){
       const hay = [o.order_no,o.issue,o.seller_result,o.issuance_result,o.packagei,o.agent,o.company,o.issuer_user].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
@@ -1058,7 +1071,7 @@ function renderTable(){
         <div class="desc-inner">
           <div class="row2">
             <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
-            <div><h4>سفارش پکیجی یا الحاقیه (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
+            <div><h4>پکیجی یا الحاقیه (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
             <div><h4>نام کاربر صدور</h4><div>${esc(o.issuer_user)||'—'}</div></div>
             <div><h4>نوع خطا</h4><div>${esc(o.error_type)||'—'}</div></div>
           </div>
@@ -1066,7 +1079,7 @@ function renderTable(){
           <div>${esc(o.issue)||'—'}</div>
           <h4 style="margin-top:12px;">کانال ورودی (سفارش الحاقیه یا تیکت)</h4>
           <div>${esc(o.seller_result)||'—'}</div>
-          <h4 style="margin-top:12px;">توضیحات (شرح کامل)</h4>
+          <h4 style="margin-top:12px;">توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</h4>
           <div>${esc(o.issuance_result)||'—'}</div>
           <div class="row2">
             <div><h4>بررسی تیم آموزش</h4><div>${esc(o.training_review)||'—'}</div></div>
@@ -1129,11 +1142,13 @@ function openAddModal(){
   document.getElementById('f_agent').value = '';
   document.getElementById('f_shift').value = 'صبح';
   document.getElementById('f_errorType').value = '';
+  // وضعیت سفارش‌های جدید همیشه به‌صورت خودکار «در انتظار تایید آموزش» ثبت می‌شود
   document.getElementById('f_status').value = 'در انتظار تایید آموزش';
   document.getElementById('f_training').value = '';
   document.getElementById('f_seniorSupervisor').value = '';
   document.getElementById('f_issuanceMgmt').value = '';
   document.getElementById('f_seniorMgmt').value = '';
+  document.getElementById('editOnlyFields').style.display = 'none';
   document.getElementById('editModalOverlay').classList.add('show');
 }
 function openEditModal(id){
@@ -1159,6 +1174,7 @@ function openEditModal(id){
   document.getElementById('f_seniorMgmt').value = o.senior_mgmt_review||'';
   document.getElementById('f_issue').value = o.issue||'';
   document.getElementById('f_seller_result').value = o.seller_result||'';
+  document.getElementById('editOnlyFields').style.display = 'grid';
   document.getElementById('f_issuance_result').value = o.issuance_result||'';
   document.getElementById('editModalOverlay').classList.add('show');
 }
@@ -1375,7 +1391,7 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی (سفارش الحاقیه یا تیکت)','توضیحات (شرح کامل)','سفارش پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','نام کاربر صدور','نوع خطا','بررسی تیم آموزش','بررسی سرپرست ارشد','بررسی مدیریت صدور','بررسی مدیریت ارشد','وضعیت سفارش'];
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی (سفارش الحاقیه یا تیکت)','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','نام کاربر صدور','نوع خطا','بررسی تیم آموزش','بررسی سرپرست ارشد','بررسی مدیریت صدور','بررسی مدیریت ارشد','وضعیت سفارش'];
   const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.senior_supervisor_review,o.issuance_mgmt_review,o.senior_mgmt_review,normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
