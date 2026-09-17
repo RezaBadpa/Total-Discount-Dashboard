@@ -1093,8 +1093,8 @@ function renderTable(){
           <div class="row2">
             <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
             <div><h4>نام نماینده</h4><div>${esc(o.agent)||'—'}</div></div>
-            <div><h4>پکیجی یا الحاقیه (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
             <div><h4>شیفت صدور الحاقیه</h4><div>${o.shift==='عصر' ? '🌙 عصر' : '☀️ صبح'}</div></div>
+            <div><h4>پکیجی یا الحاقیه (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
             <div><h4>نام کاربر صدور</h4><div>${esc(o.issuer_user)||'—'}</div></div>
             <div><h4>شماره سفارش الحاقیه - تیکت</h4><div class="mono">${esc(o.seller_ticket_no)||'—'}</div></div>
           </div>
