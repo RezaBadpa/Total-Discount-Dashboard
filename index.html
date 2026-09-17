@@ -485,8 +485,27 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_errorType"><option value="">— نامشخص —</option><option value="بارمالی">بارمالی</option><option value="بدون بارمالی">بدون بارمالی</option></select>
         </div>
         <div class="field"><label>نام کاربر صدور</label><input id="f_issuerUser"></div>
-        <div class="field full"><label>کانال ورودی (سفارش الحاقیه یا تیکت)</label><input id="f_seller_result"></div>
-        <div class="field full"><label>نوع مغایرت (شرح خلاصه)</label><input id="f_issue"></div>
+        <div class="field"><label>کانال ورودی</label>
+          <select id="f_seller_result">
+            <option value="سفارش الحاقیه (ایجنت)">سفارش الحاقیه (ایجنت)</option>
+            <option value="تیکت (بک آفیس)">تیکت (بک آفیس)</option>
+          </select>
+        </div>
+        <div class="field"><label>شماره سفارش الحاقیه - تیکت</label><input id="f_sellerTicketNo"></div>
+        <div class="field full"><label>نوع مغایرت (شرح خلاصه)</label>
+          <select id="f_issue">
+            <option value="صدور با اطلاعات غلط خودرو (سال ساخت - سیلندر- تناژ - نوع خودرو)">صدور با اطلاعات غلط خودرو (سال ساخت - سیلندر- تناژ - نوع خودرو)</option>
+            <option value="سه رکن اشتباه (شاسی - موتور و وین) و صدور بیمه جدید">سه رکن اشتباه (شاسی - موتور و وین) و صدور بیمه جدید</option>
+            <option value="صدور بیمه نامه با سوابق اشتباه (تخفیفات - جریمه)">صدور بیمه نامه با سوابق اشتباه (تخفیفات - جریمه)</option>
+            <option value="اعمال کردن خسارت (جانی - مالی - حوادث راننده)">اعمال کردن خسارت (جانی - مالی - حوادث راننده)</option>
+            <option value="عدم ثبت سفارش الحاقیه یا بیمه نامه در پنل">عدم ثبت سفارش الحاقیه یا بیمه نامه در پنل</option>
+            <option value="عدم صدور بیمه نامه داخل سفارش اصلی">عدم صدور بیمه نامه داخل سفارش اصلی</option>
+            <option value="اعمال تخفیفات روی بیمه نامه تخلف بوده">اعمال تخفیفات روی بیمه نامه تخلف بوده</option>
+            <option value="ابطال سفارش بعد از صدور بیمه نامه">ابطال سفارش بعد از صدور بیمه نامه</option>
+            <option value="تعدد صدور دو بیمه نامه">تعدد صدور دو بیمه نامه</option>
+            <option value="سایر">سایر</option>
+          </select>
+        </div>
         <div class="field full"><label>توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
 
         <div id="editOnlyFields" class="form-grid" style="grid-column:1/-1;padding:0;">
@@ -494,9 +513,14 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
             <label style="color:var(--muted2);">فیلدهای زیر فقط هنگام ویرایش یک سفارش موجود قابل‌تغییرند</label>
           </div>
           <div class="field"><label>بررسی تیم آموزش</label><select id="f_training"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+          <div class="field"><label>توضیحات تیم آموزش</label><input id="f_trainingNotes"></div>
           <div class="field"><label>بررسی مدیریت</label><select id="f_mgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+          <div class="field"><label>توضیحات مدیریت</label><input id="f_mgmtNotes"></div>
           <div class="field"><label>وضعیت سفارش</label>
             <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="در انتظار پرداخت">در انتظار پرداخت</option></select>
+          </div>
+          <div class="field"><label>کسر از حقوق</label>
+            <select id="f_salaryDeduction"><option value="">— نامشخص —</option><option value="کسر شد ):">کسر شد ):</option><option value="کسر نشد (:">کسر نشد (:</option></select>
           </div>
         </div>
       </div>
@@ -641,9 +665,10 @@ function formatAmountInput(el){
 }
 const FIELD_LABELS = {
   order_no: 'شماره سفارش', line: 'رشته بیمه', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ',
-  issue: 'نوع مغایرت', seller_result: 'کانال ورودی', issuance_result: 'توضیحات',
-  packagei: 'سفارش پکیجی/الحاقیه', amount: 'مبلغ', shift: 'شیفت', issuer_user: 'کاربر صدور', error_type: 'نوع خطا',
-  training_review: 'بررسی تیم آموزش', mgmt_review: 'بررسی مدیریت', status: 'وضعیت سفارش'
+  issue: 'نوع مغایرت', seller_result: 'کانال ورودی', seller_ticket_no: 'شماره سفارش الحاقیه - تیکت', issuance_result: 'توضیحات',
+  packagei: 'پکیجی/الحاقیه', amount: 'مبلغ', shift: 'شیفت', issuer_user: 'کاربر صدور', error_type: 'نوع خطا',
+  training_review: 'بررسی تیم آموزش', training_notes: 'توضیحات تیم آموزش',
+  mgmt_review: 'بررسی مدیریت', mgmt_notes: 'توضیحات مدیریت', salary_deduction: 'کسر از حقوق', status: 'وضعیت سفارش'
 };
 function buildDiffText(oldObj, payload){
   const parts = [];
@@ -660,7 +685,7 @@ function orderMatchesPayload(row, payload){
   // فیلد 'date' به‌خاطر محدودیت «Column type» گوگل‌شیت هیچ‌وقت نوشته نمی‌شود؛
   // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
   // کل ذخیره‌سازی «ناموفق» گزارش شود.
-  const fields = ['order_no','line','company','agent','issue','seller_result','issuance_result','packagei','shift','issuer_user','error_type','training_review','mgmt_review'];
+  const fields = ['order_no','line','company','agent','issue','seller_result','seller_ticket_no','issuance_result','packagei','shift','issuer_user','error_type','training_review','training_notes','mgmt_review','mgmt_notes','salary_deduction'];
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
@@ -1072,13 +1097,18 @@ function renderTable(){
           </div>
           <h4 style="margin-top:12px;">نوع مغایرت (شرح خلاصه)</h4>
           <div>${esc(o.issue)||'—'}</div>
-          <h4 style="margin-top:12px;">کانال ورودی (سفارش الحاقیه یا تیکت)</h4>
-          <div>${esc(o.seller_result)||'—'}</div>
+          <div class="row2">
+            <div><h4>کانال ورودی</h4><div>${esc(o.seller_result)||'—'}</div></div>
+            <div><h4>شماره سفارش الحاقیه - تیکت</h4><div class="mono">${esc(o.seller_ticket_no)||'—'}</div></div>
+          </div>
           <h4 style="margin-top:12px;">توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</h4>
           <div>${esc(o.issuance_result)||'—'}</div>
           <div class="row2">
             <div><h4>بررسی تیم آموزش</h4><div>${esc(o.training_review)||'—'}</div></div>
+            <div><h4>توضیحات تیم آموزش</h4><div>${esc(o.training_notes)||'—'}</div></div>
             <div><h4>بررسی مدیریت</h4><div>${esc(o.mgmt_review)||'—'}</div></div>
+            <div><h4>توضیحات مدیریت</h4><div>${esc(o.mgmt_notes)||'—'}</div></div>
+            <div><h4>کسر از حقوق</h4><div>${esc(o.salary_deduction)||'—'}</div></div>
           </div>
         </div>
       </td>
@@ -1129,22 +1159,25 @@ function openAddModal(){
   editingId = null;
   populateFormSelects();
   document.getElementById('editModalTitle').textContent = 'افزودن مورد جدید';
-  ['order_no','packagei','agent','date','amount','issue','seller_result','issuance_result','issuerUser'].forEach(f=>document.getElementById('f_'+f).value='');
+  ['order_no','packagei','agent','date','amount','issuerUser','sellerTicketNo','issuance_result','trainingNotes','mgmtNotes'].forEach(f=>document.getElementById('f_'+f).value='');
   document.getElementById('f_line').value = 'خودرویی - ثالث';
   document.getElementById('f_company').selectedIndex = 0;
   document.getElementById('f_agent').value = '';
   document.getElementById('f_shift').value = 'صبح';
   document.getElementById('f_errorType').value = '';
+  document.getElementById('f_seller_result').selectedIndex = 0;
+  document.getElementById('f_issue').selectedIndex = 0;
   // وضعیت سفارش‌های جدید همیشه به‌صورت خودکار «در انتظار تایید آموزش» ثبت می‌شود
   document.getElementById('f_status').value = 'در انتظار تایید آموزش';
   document.getElementById('f_training').value = '';
   document.getElementById('f_mgmt').value = '';
+  document.getElementById('f_salaryDeduction').value = '';
   document.getElementById('editOnlyFields').style.display = 'none';
   ALL_EDIT_FIELD_IDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.disabled = false; });
   document.getElementById('memberEditNote').style.display = 'none';
   document.getElementById('editModalOverlay').classList.add('show');
 }
-const ALL_EDIT_FIELD_IDS = ['f_order_no','f_packagei','f_line','f_company','f_agent','f_shift','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_issue','f_issuance_result','f_status','f_training','f_mgmt'];
+const ALL_EDIT_FIELD_IDS = ['f_order_no','f_packagei','f_line','f_company','f_agent','f_shift','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_sellerTicketNo','f_issue','f_issuance_result','f_status','f_training','f_trainingNotes','f_mgmt','f_mgmtNotes','f_salaryDeduction'];
 const MEMBER_EDITABLE_FIELD_IDS = ['f_order_no','f_packagei','f_issue','f_issuance_result'];
 function applyRoleFieldRestrictions(){
   const isAdmin = currentUserRole === 'admin';
@@ -1173,9 +1206,13 @@ function openEditModal(id){
   document.getElementById('f_errorType').value = o.error_type||'';
   document.getElementById('f_status').value = normStatus(o.status)||'در انتظار تایید آموزش';
   document.getElementById('f_training').value = o.training_review||'';
+  document.getElementById('f_trainingNotes').value = o.training_notes||'';
   document.getElementById('f_mgmt').value = o.mgmt_review||'';
+  document.getElementById('f_mgmtNotes').value = o.mgmt_notes||'';
+  document.getElementById('f_salaryDeduction').value = o.salary_deduction||'';
   document.getElementById('f_issue').value = o.issue||'';
   document.getElementById('f_seller_result').value = o.seller_result||'';
+  document.getElementById('f_sellerTicketNo').value = o.seller_ticket_no||'';
   document.getElementById('editOnlyFields').style.display = 'grid';
   document.getElementById('f_issuance_result').value = o.issuance_result||'';
   applyRoleFieldRestrictions();
@@ -1198,8 +1235,9 @@ async function saveRow(){
     company: document.getElementById('f_company').value,
     agent: document.getElementById('f_agent').value.trim(),
     date: document.getElementById('f_date').value.trim(),
-    issue: document.getElementById('f_issue').value.trim(),
-    seller_result: document.getElementById('f_seller_result').value.trim(),
+    issue: document.getElementById('f_issue').value,
+    seller_result: document.getElementById('f_seller_result').value,
+    seller_ticket_no: document.getElementById('f_sellerTicketNo').value.trim(),
     issuance_result: document.getElementById('f_issuance_result').value.trim(),
     packagei: document.getElementById('f_packagei').value.trim(),
     amount: Number(document.getElementById('f_amount').value.replace(/,/g,''))||0,
@@ -1207,7 +1245,10 @@ async function saveRow(){
     issuer_user: document.getElementById('f_issuerUser').value.trim(),
     error_type: document.getElementById('f_errorType').value,
     training_review: document.getElementById('f_training').value,
+    training_notes: document.getElementById('f_trainingNotes').value.trim(),
     mgmt_review: document.getElementById('f_mgmt').value,
+    mgmt_notes: document.getElementById('f_mgmtNotes').value.trim(),
+    salary_deduction: document.getElementById('f_salaryDeduction').value,
     status: document.getElementById('f_status').value,
   };
   const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
@@ -1392,8 +1433,8 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی (سفارش الحاقیه یا تیکت)','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','نام کاربر صدور','نوع خطا','بررسی تیم آموزش','بررسی مدیریت','وضعیت سفارش'];
-  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.mgmt_review,normStatus(o.status)]);
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','نام کاربر صدور','نوع خطا','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','وضعیت سفارش'];
+  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
     return /[",\n]/.test(s) ? `"${s}"` : s;
