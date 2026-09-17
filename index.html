@@ -1091,18 +1091,15 @@ function renderTable(){
       <td colspan="11">
         <div class="desc-inner">
           <div class="row2">
-            <div><h4>نماینده</h4><div>${esc(o.agent)||'—'}</div></div>
-            <div><h4>شیفت صدور الحاقیه</h4><div>${o.shift==='عصر' ? '🌙 عصر' : '☀️ صبح'}</div></div>
             <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
+            <div><h4>نام نماینده</h4><div>${esc(o.agent)||'—'}</div></div>
             <div><h4>پکیجی یا الحاقیه (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
+            <div><h4>شیفت صدور الحاقیه</h4><div>${o.shift==='عصر' ? '🌙 عصر' : '☀️ صبح'}</div></div>
             <div><h4>نام کاربر صدور</h4><div>${esc(o.issuer_user)||'—'}</div></div>
+            <div><h4>شماره سفارش الحاقیه - تیکت</h4><div class="mono">${esc(o.seller_ticket_no)||'—'}</div></div>
           </div>
           <h4 style="margin-top:12px;">نوع مغایرت (شرح خلاصه)</h4>
           <div>${esc(o.issue)||'—'}</div>
-          <div class="row2">
-            <div><h4>کانال ورودی</h4><div>${esc(o.seller_result)||'—'}</div></div>
-            <div><h4>شماره سفارش الحاقیه - تیکت</h4><div class="mono">${esc(o.seller_ticket_no)||'—'}</div></div>
-          </div>
           <h4 style="margin-top:12px;">توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</h4>
           <div>${esc(o.issuance_result)||'—'}</div>
           <div class="row2">
@@ -1110,7 +1107,6 @@ function renderTable(){
             <div><h4>توضیحات تیم آموزش</h4><div>${esc(o.training_notes)||'—'}</div></div>
             <div><h4>بررسی مدیریت</h4><div>${esc(o.mgmt_review)||'—'}</div></div>
             <div><h4>توضیحات مدیریت</h4><div>${esc(o.mgmt_notes)||'—'}</div></div>
-            <div><h4>کسر از حقوق</h4><div>${esc(o.salary_deduction)||'—'}</div></div>
           </div>
         </div>
       </td>
