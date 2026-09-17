@@ -429,10 +429,11 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
             <th>شماره سفارش</th>
             <th>رشته بیمه</th>
             <th>شرکت بیمه</th>
-            <th>نماینده</th>
-            <th>شیفت</th>
+            <th>کانال ورودی</th>
+            <th>نوع خطا</th>
             <th>مبلغ (ریال)</th>
             <th>وضعیت سفارش</th>
+            <th>کسر از حقوق</th>
             <th>توضیحات</th>
             <th>عملیات</th>
           </tr>
@@ -1057,23 +1058,23 @@ function renderTable(){
   const pageItems = filtered.slice(start, start+PAGE_SIZE);
   const tbody = document.getElementById('tableBody');
   if(!pageItems.length){
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted2);padding:40px;">موردی یافت نشد</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--muted2);padding:40px;">موردی یافت نشد</td></tr>`;
     return;
   }
   tbody.innerHTML = pageItems.map((o,idx)=>{
     const st = normStatus(o.status);
     const pillClass = STATUS_CLASS[st] || 'wait-discount';
-    const shiftIcon = o.shift === 'عصر' ? `<span class="shift-ic moon">🌙 عصر</span>` : `<span class="shift-ic sun">☀️ صبح</span>`;
     return `
     <tr>
       <td>${(start+idx+1).toLocaleString('en-US')}</td>
       <td class="mono">${esc(o.order_no)}</td>
       <td>${esc(o.line)}</td>
       <td>${esc(o.company)}</td>
-      <td>${esc(o.agent)}</td>
-      <td>${shiftIcon}</td>
+      <td>${esc(o.seller_result)}</td>
+      <td>${esc(o.error_type)}</td>
       <td class="amount-cell">${fmt(o.amount)}</td>
       <td><span class="pill ${pillClass}">${esc(st)}</span></td>
+      <td>${esc(o.salary_deduction)||'—'}</td>
       <td>
         <button class="desc-toggle-btn" id="descBtn-${o.id}" onclick="toggleDesc(${o.id})">
           <span>جزئیات</span>
@@ -1087,13 +1088,14 @@ function renderTable(){
       </td>
     </tr>
     <tr class="desc-row" id="desc-${o.id}">
-      <td colspan="10">
+      <td colspan="11">
         <div class="desc-inner">
           <div class="row2">
+            <div><h4>نماینده</h4><div>${esc(o.agent)||'—'}</div></div>
+            <div><h4>شیفت صدور الحاقیه</h4><div>${o.shift==='عصر' ? '🌙 عصر' : '☀️ صبح'}</div></div>
             <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
             <div><h4>پکیجی یا الحاقیه (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
             <div><h4>نام کاربر صدور</h4><div>${esc(o.issuer_user)||'—'}</div></div>
-            <div><h4>نوع خطا</h4><div>${esc(o.error_type)||'—'}</div></div>
           </div>
           <h4 style="margin-top:12px;">نوع مغایرت (شرح خلاصه)</h4>
           <div>${esc(o.issue)||'—'}</div>
