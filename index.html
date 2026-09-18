@@ -193,10 +193,10 @@ select.filter-sel{
 .table-scroll{overflow-x:auto;border:1px solid var(--border-soft);border-radius:12px;}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px;}
 thead th{
-  background:#0a0f15;color:var(--muted);font-weight:600;text-align:right;padding:12px 14px;
+  background:#0a0f15;color:var(--muted);font-weight:600;text-align:center;padding:12px 14px;
   border-bottom:1px solid var(--border);white-space:nowrap;font-size:12px;
 }
-tbody td{padding:13px 14px;border-bottom:1px solid var(--border-soft);vertical-align:middle;color:var(--text);}
+tbody td{padding:13px 14px;border-bottom:1px solid var(--border-soft);vertical-align:middle;color:var(--text);text-align:center;}
 tbody tr{transition:.12s;}
 tbody tr:hover{background:rgba(255,255,255,0.02);}
 tbody tr.expanded-row td{border-bottom:none;}
@@ -215,7 +215,7 @@ tbody tr.expanded-row td{border-bottom:none;}
 .shift-ic{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px;}
 .shift-ic.sun{color:var(--yellow);}
 .shift-ic.moon{color:var(--blue);}
-.row-actions{display:flex;gap:6px;}
+.row-actions{display:flex;gap:6px;justify-content:center;}
 .row-actions button{
   width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--card2);
   color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -396,6 +396,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
       <select class="filter-sel" id="fLine" onchange="applyFilters()"><option value="">همه رشته‌ها</option></select>
       <select class="filter-sel" id="fStatus" onchange="applyFilters()"><option value="">همه وضعیت‌ها</option></select>
       <select class="filter-sel" id="fErrorType" onchange="applyFilters()"><option value="">همه انواع خطا</option></select>
+      <select class="filter-sel" id="fIssue" onchange="applyFilters()"><option value="">همه انواع مغایرت</option></select>
       <select class="filter-sel" id="fSellerResult" onchange="applyFilters()"><option value="">همه کانال‌های ورودی</option></select>
       <select class="filter-sel" id="fSalaryDeduction" onchange="applyFilters()"><option value="">کسر از حقوق (همه)</option></select>
       <select class="filter-sel" id="fAmountRange" onchange="applyFilters()">
@@ -878,6 +879,18 @@ const ERROR_TYPE_LIST = ['بارمالی','بدون بارمالی'];
 const SELLER_RESULT_LIST = ['سفارش الحاقیه (ایجنت)','تیکت (بک آفیس)'];
 const SALARY_DEDUCTION_LIST = ['کسر شد ):','کسر نشد (:'];
 const LINE_LIST = ['خودرویی - ثالث','خودرویی - بدنه','غیرخودرویی'];
+const ISSUE_LIST = [
+  'صدور با اطلاعات غلط خودرو (سال ساخت - سیلندر- تناژ - نوع خودرو)',
+  'سه رکن اشتباه (شاسی - موتور و وین) و صدور بیمه جدید',
+  'صدور بیمه نامه با سوابق اشتباه (تخفیفات - جریمه)',
+  'اعمال کردن خسارت (جانی - مالی - حوادث راننده)',
+  'عدم ثبت سفارش الحاقیه یا بیمه نامه در پنل',
+  'عدم صدور بیمه نامه داخل سفارش اصلی',
+  'اعمال تخفیفات روی بیمه نامه تخلف بوده',
+  'ابطال سفارش بعد از صدور بیمه نامه',
+  'تعدد صدور دو بیمه نامه',
+  'سایر'
+];
 function populateFilterOptions(){
   const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
   const statuses = STATUS_LIST;
@@ -886,6 +899,7 @@ function populateFilterOptions(){
   fillSelect('fLine', lines, 'همه رشته‌ها');
   fillSelect('fStatus', statuses, 'همه وضعیت‌ها');
   fillSelect('fErrorType', ERROR_TYPE_LIST, 'همه انواع خطا');
+  fillSelect('fIssue', ISSUE_LIST, 'همه انواع مغایرت');
   fillSelect('fSellerResult', SELLER_RESULT_LIST, 'همه کانال‌های ورودی');
   fillSelect('fSalaryDeduction', SALARY_DEDUCTION_LIST, 'کسر از حقوق (همه)');
 }
@@ -913,6 +927,7 @@ function clearFilters(){
   document.getElementById('fLine').value='';
   document.getElementById('fStatus').value='';
   document.getElementById('fErrorType').value='';
+  document.getElementById('fIssue').value='';
   document.getElementById('fSellerResult').value='';
   document.getElementById('fSalaryDeduction').value='';
   document.getElementById('fAmountRange').value='';
@@ -924,6 +939,7 @@ function applyFilters(){
   const fl = document.getElementById('fLine').value;
   const fs = document.getElementById('fStatus').value;
   const fet = document.getElementById('fErrorType').value;
+  const fis = document.getElementById('fIssue').value;
   const fsr = document.getElementById('fSellerResult').value;
   const fsd = document.getElementById('fSalaryDeduction').value;
   const far = document.getElementById('fAmountRange').value;
@@ -933,6 +949,7 @@ function applyFilters(){
     if(fl && (o.line||'').trim() !== fl) return false;
     if(fs && normStatus(o.status) !== fs) return false;
     if(fet && (o.error_type||'').trim() !== fet) return false;
+    if(fis && (o.issue||'').trim() !== fis) return false;
     if(fsr && (o.seller_result||'').trim() !== fsr) return false;
     if(fsd && (o.salary_deduction||'').trim() !== fsd) return false;
     if(far){
