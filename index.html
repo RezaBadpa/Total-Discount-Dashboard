@@ -394,9 +394,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
       </div>
       <select class="filter-sel" id="fCompany" onchange="applyFilters()"><option value="">همه شرکت‌های بیمه</option></select>
       <select class="filter-sel" id="fLine" onchange="applyFilters()"><option value="">همه رشته‌ها</option></select>
-      <select class="filter-sel" id="fAgent" onchange="applyFilters()"><option value="">همه نمایندگان</option></select>
       <select class="filter-sel" id="fStatus" onchange="applyFilters()"><option value="">همه وضعیت‌ها</option></select>
-      <select class="filter-sel" id="fShift" onchange="applyFilters()"><option value="">همه شیفت‌ها</option></select>
       <select class="filter-sel" id="fErrorType" onchange="applyFilters()"><option value="">همه انواع خطا</option></select>
       <select class="filter-sel" id="fSellerResult" onchange="applyFilters()"><option value="">همه کانال‌های ورودی</option></select>
       <select class="filter-sel" id="fSalaryDeduction" onchange="applyFilters()"><option value="">کسر از حقوق (همه)</option></select>
@@ -882,15 +880,11 @@ const SALARY_DEDUCTION_LIST = ['کسر شد ):','کسر نشد (:'];
 const LINE_LIST = ['خودرویی - ثالث','خودرویی - بدنه','غیرخودرویی'];
 function populateFilterOptions(){
   const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
-  const agents = [...new Set([...orders.map(o=>o.agent), ...extraAgents].filter(Boolean))].sort();
   const statuses = STATUS_LIST;
-  const shifts = [...new Set(orders.map(o=>o.shift).filter(Boolean))];
   const lines = [...new Set([...LINE_LIST, ...orders.map(o=>o.line)].filter(Boolean))];
   fillSelect('fCompany', companies, 'همه شرکت‌های بیمه');
   fillSelect('fLine', lines, 'همه رشته‌ها');
-  fillSelect('fAgent', agents, 'همه نمایندگان');
   fillSelect('fStatus', statuses, 'همه وضعیت‌ها');
-  fillSelect('fShift', shifts, 'همه شیفت‌ها');
   fillSelect('fErrorType', ERROR_TYPE_LIST, 'همه انواع خطا');
   fillSelect('fSellerResult', SELLER_RESULT_LIST, 'همه کانال‌های ورودی');
   fillSelect('fSalaryDeduction', SALARY_DEDUCTION_LIST, 'کسر از حقوق (همه)');
@@ -917,9 +911,7 @@ function clearFilters(){
   document.getElementById('searchBox').value='';
   document.getElementById('fCompany').value='';
   document.getElementById('fLine').value='';
-  document.getElementById('fAgent').value='';
   document.getElementById('fStatus').value='';
-  document.getElementById('fShift').value='';
   document.getElementById('fErrorType').value='';
   document.getElementById('fSellerResult').value='';
   document.getElementById('fSalaryDeduction').value='';
@@ -930,9 +922,7 @@ function applyFilters(){
   const q = document.getElementById('searchBox').value.trim().toLowerCase();
   const fc = document.getElementById('fCompany').value;
   const fl = document.getElementById('fLine').value;
-  const fa = document.getElementById('fAgent').value;
   const fs = document.getElementById('fStatus').value;
-  const fsh = document.getElementById('fShift').value;
   const fet = document.getElementById('fErrorType').value;
   const fsr = document.getElementById('fSellerResult').value;
   const fsd = document.getElementById('fSalaryDeduction').value;
@@ -941,9 +931,7 @@ function applyFilters(){
   filtered = orders.filter(o=>{
     if(fc && o.company !== fc) return false;
     if(fl && (o.line||'').trim() !== fl) return false;
-    if(fa && o.agent !== fa) return false;
     if(fs && normStatus(o.status) !== fs) return false;
-    if(fsh && o.shift !== fsh) return false;
     if(fet && (o.error_type||'').trim() !== fet) return false;
     if(fsr && (o.seller_result||'').trim() !== fsr) return false;
     if(fsd && (o.salary_deduction||'').trim() !== fsd) return false;
