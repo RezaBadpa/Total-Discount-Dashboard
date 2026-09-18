@@ -436,7 +436,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
             <th>شماره سفارش</th>
             <th>رشته بیمه</th>
             <th>شرکت بیمه</th>
-            <th>کانال ورودی</th>
+            <th>کاربر صدور</th>
             <th>نوع خطا</th>
             <th>مبلغ (ریال)</th>
             <th>وضعیت سفارش</th>
@@ -481,7 +481,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div class="field"><label>شرکت بیمه</label>
           <select id="f_company"></select>
         </div>
-        <div class="field"><label>نام نماینده</label>
+        <div class="field"><label>نماینده بیمه</label>
           <select id="f_agent"></select>
         </div>
         <div class="field"><label>شیفت صدور الحاقیه</label>
@@ -492,7 +492,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div class="field"><label>نوع خطا</label>
           <select id="f_errorType"><option value="">— نامشخص —</option><option value="بارمالی">بارمالی</option><option value="بدون بارمالی">بدون بارمالی</option></select>
         </div>
-        <div class="field"><label>نام کاربر صدور</label><input id="f_issuerUser"></div>
+        <div class="field"><label>کاربر صدور</label><input id="f_issuerUser"></div>
         <div class="field"><label>کانال ورودی</label>
           <select id="f_seller_result">
             <option value="سفارش الحاقیه (ایجنت)">سفارش الحاقیه (ایجنت)</option>
@@ -1092,7 +1092,7 @@ function renderTable(){
       <td class="mono">${esc(o.order_no)}</td>
       <td>${esc(o.line)}</td>
       <td>${esc(o.company)}</td>
-      <td>${esc(o.seller_result)}</td>
+      <td>${esc(o.issuer_user)}</td>
       <td>${esc(o.error_type)}</td>
       <td class="amount-cell">${fmt(o.amount)}</td>
       <td><span class="pill ${pillClass}">${esc(st)}</span></td>
@@ -1114,10 +1114,10 @@ function renderTable(){
         <div class="desc-inner">
           <div class="row2">
             <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
-            <div><h4>نام نماینده</h4><div>${esc(o.agent)||'—'}</div></div>
+            <div><h4>نماینده بیمه</h4><div>${esc(o.agent)||'—'}</div></div>
             <div><h4>شیفت صدور الحاقیه</h4><div>${o.shift==='عصر' ? '🌙 عصر' : '☀️ صبح'}</div></div>
             <div><h4>پکیجی یا الحاقیه (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>
-            <div><h4>نام کاربر صدور</h4><div>${esc(o.issuer_user)||'—'}</div></div>
+            <div><h4>کانال ورودی</h4><div>${esc(o.seller_result)||'—'}</div></div>
             <div><h4>شماره سفارش الحاقیه - تیکت</h4><div class="mono">${esc(o.seller_ticket_no)||'—'}</div></div>
           </div>
           <h4 style="margin-top:12px;">نوع مغایرت (شرح خلاصه)</h4>
@@ -1453,7 +1453,7 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نام نماینده','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','نام کاربر صدور','نوع خطا','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','وضعیت سفارش'];
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','کاربر صدور','نوع خطا','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','وضعیت سفارش'];
   const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
