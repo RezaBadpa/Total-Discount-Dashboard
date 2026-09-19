@@ -879,6 +879,12 @@ const ERROR_TYPE_LIST = ['بارمالی','بدون بارمالی'];
 const SELLER_RESULT_LIST = ['سفارش الحاقیه (ایجنت)','تیکت (بک آفیس)'];
 const SALARY_DEDUCTION_LIST = ['کسر شد ):','کسر نشد (:'];
 const LINE_LIST = ['خودرویی - ثالث','خودرویی - بدنه','غیرخودرویی'];
+// چون توی شیت گاهی فاصله‌گذاری دور خط تیره فرق می‌کند (مثلاً «خودرویی-  بدنه»)،
+// این تابع همه‌ی حالت‌ها را به یک شکل استاندارد یکسان تبدیل می‌کند تا در فیلتر
+// دو گزینه‌ی ظاهراً یکسان تکراری نشوند.
+function normLine(s){
+  return String(s||'').trim().replace(/\s*-\s*/g, ' - ');
+}
 const ISSUE_LIST = [
   'صدور با اطلاعات غلط خودرو (سال ساخت - سیلندر- تناژ - نوع خودرو)',
   'سه رکن اشتباه (شاسی - موتور و وین) و صدور بیمه جدید',
@@ -894,7 +900,7 @@ const ISSUE_LIST = [
 function populateFilterOptions(){
   const companies = [...new Set([...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort();
   const statuses = STATUS_LIST;
-  const lines = [...new Set([...LINE_LIST, ...orders.map(o=>o.line)].filter(Boolean))];
+  const lines = [...new Set([...LINE_LIST, ...orders.map(o=>normLine(o.line))].filter(Boolean))];
   fillSelect('fCompany', companies, 'همه شرکت‌های بیمه');
   fillSelect('fLine', lines, 'همه رشته‌ها');
   fillSelect('fStatus', statuses, 'همه وضعیت‌ها');
@@ -946,7 +952,7 @@ function applyFilters(){
 
   filtered = orders.filter(o=>{
     if(fc && o.company !== fc) return false;
-    if(fl && (o.line||'').trim() !== fl) return false;
+    if(fl && normLine(o.line) !== fl) return false;
     if(fs && normStatus(o.status) !== fs) return false;
     if(fet && (o.error_type||'').trim() !== fet) return false;
     if(fis && (o.issue||'').trim() !== fis) return false;
@@ -1107,7 +1113,7 @@ function renderTable(){
     <tr>
       <td>${(start+idx+1).toLocaleString('en-US')}</td>
       <td class="mono">${esc(o.order_no)}</td>
-      <td>${esc(o.line)}</td>
+      <td>${esc(normLine(o.line))}</td>
       <td>${esc(o.company)}</td>
       <td>${esc(o.issuer_user)}</td>
       <td>${esc(o.error_type)}</td>
@@ -1233,7 +1239,7 @@ function openEditModal(id){
   document.getElementById('editModalTitle').textContent = 'ویرایش مورد سفارش ' + o.order_no;
   document.getElementById('f_order_no').value = o.order_no||'';
   document.getElementById('f_packagei').value = o.packagei||'';
-  document.getElementById('f_line').value = o.line || 'خودرویی - ثالث';
+  document.getElementById('f_line').value = normLine(o.line) || 'خودرویی - ثالث';
   document.getElementById('f_company').value = o.company||'';
   document.getElementById('f_agent').value = o.agent||'';
   document.getElementById('f_date').value = o.date||'';
