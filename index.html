@@ -379,8 +379,8 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
       <div class="chart-box tall"><canvas id="chartCompany"></canvas></div>
     </div>
     <div class="panel">
-      <div class="panel-title"><span class="pic">👥</span> سهم نمایندگان (بر اساس مبلغ)</div>
-      <div class="chart-box tall"><canvas id="chartAgentAmount"></canvas></div>
+      <div class="panel-title"><span class="pic">💰</span> مقایسه مبالغ تخفیف شده و کسر شده (ریال)</div>
+      <div class="chart-box tall"><canvas id="chartDeductVsDiscount"></canvas></div>
     </div>
   </div>
 
@@ -1075,18 +1075,23 @@ function renderCharts(){
     options: baseDonutOpts()
   });
 
-  // agent by amount (horizontal bar)
-  const agentAmt = {};
-  list.forEach(o=>{ const a=o.agent||'نامشخص'; agentAmt[a]=(agentAmt[a]||0)+(Number(o.amount)||0); });
-  const agentAmtKeys = Object.keys(agentAmt).sort((a,b)=>agentAmt[b]-agentAmt[a]).slice(0,10);
-  destroyChart('agentAmount');
-  chartInstances.agentAmount = new Chart(document.getElementById('chartAgentAmount'), {
+  // مقایسه جمع مبالغ تخفیف‌شده و کسر شده (نمودار میله‌ای عمودی، زمین تا بالا)
+  const totalDiscounted = list.filter(o=>normStatus(o.status)==='تخفیف شد').reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const totalDeducted = list.filter(o=>(o.salary_deduction||'').trim()==='کسر شد ):').reduce((s,o)=>s+(Number(o.amount)||0),0);
+  destroyChart('deductVsDiscount');
+  chartInstances.deductVsDiscount = new Chart(document.getElementById('chartDeductVsDiscount'), {
     type:'bar',
-    data:{ labels:agentAmtKeys, datasets:[{ data:agentAmtKeys.map(k=>Math.round(agentAmt[k]/1e6)), backgroundColor:'#3ab7ff', borderRadius:6 }] },
+    data:{
+      labels:['جمع مبالغ تخفیف‌شده','جمع مبالغ کسر شده'],
+      datasets:[{ data:[totalDiscounted, totalDeducted], backgroundColor:['#22e6ae','#ff5c93'], borderRadius:8, maxBarThickness:110 }]
+    },
     options:{
-      indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> ctx.parsed.x.toLocaleString('en-US') + ' میلیون ریال' } } },
-      scales:{ x:{ ticks:{ color:'#7c8a9a' }, grid:{ color:'rgba(255,255,255,0.03)' } }, y:{ ticks:{ color:'#e7edf3', font:{family:'Vazirmatn', size:11.5} }, grid:{ display:false } } }
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> ctx.parsed.y.toLocaleString('en-US') + ' ریال' } } },
+      scales:{
+        x:{ ticks:{ color:'#e7edf3', font:{family:'Vazirmatn', size:12.5} }, grid:{ display:false } },
+        y:{ beginAtZero:true, ticks:{ color:'#7c8a9a', callback:(v)=>Number(v).toLocaleString('en-US') }, grid:{ color:'rgba(255,255,255,0.03)' } }
+      }
     }
   });
 }
