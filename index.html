@@ -529,6 +529,8 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <div class="field"><label>کسر از حقوق</label>
             <select id="f_salaryDeduction"><option value="">— نامشخص —</option><option value="کسر شد ):">کسر شد ):</option><option value="کسر نشد (:">کسر نشد (:</option></select>
           </div>
+          <div class="field"><label>مبلغ کسر شده (ریال)</label><input id="f_deductedAmount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this)"></div>
+          <div class="field"><label>مبلغ باقی‌مانده جهت کسر (ریال)</label><input id="f_remainingAmount" disabled placeholder="—"></div>
         </div>
       </div>
     </div>
@@ -675,7 +677,7 @@ const FIELD_LABELS = {
   issue: 'نوع مغایرت', seller_result: 'کانال ورودی', seller_ticket_no: 'شماره سفارش الحاقیه - تیکت', issuance_result: 'توضیحات',
   packagei: 'پکیجی/الحاقیه', amount: 'مبلغ', shift: 'شیفت', issuer_user: 'کاربر صدور', error_type: 'نوع خطا',
   training_review: 'بررسی تیم آموزش', training_notes: 'توضیحات تیم آموزش',
-  mgmt_review: 'بررسی مدیریت', mgmt_notes: 'توضیحات مدیریت', salary_deduction: 'کسر از حقوق', status: 'وضعیت سفارش'
+  mgmt_review: 'بررسی مدیریت', mgmt_notes: 'توضیحات مدیریت', salary_deduction: 'کسر از حقوق', deducted_amount: 'مبلغ کسر شده', status: 'وضعیت سفارش'
 };
 function buildDiffText(oldObj, payload){
   const parts = [];
@@ -693,6 +695,7 @@ function orderMatchesPayload(row, payload){
   // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
   // کل ذخیره‌سازی «ناموفق» گزارش شود.
   const fields = ['order_no','line','company','agent','issue','seller_result','seller_ticket_no','issuance_result','packagei','shift','issuer_user','error_type','training_review','training_notes','mgmt_review','mgmt_notes','salary_deduction'];
+  if(Number(row.deducted_amount||0) !== Number(payload.deducted_amount||0)) return false;
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
@@ -1152,6 +1155,8 @@ function renderTable(){
             <div><h4>توضیحات تیم آموزش</h4><div>${esc(o.training_notes)||'—'}</div></div>
             <div><h4>بررسی مدیریت</h4><div>${esc(o.mgmt_review)||'—'}</div></div>
             <div><h4>توضیحات مدیریت</h4><div>${esc(o.mgmt_notes)||'—'}</div></div>
+            <div><h4>مبلغ کسر شده (ریال)</h4><div>${o.deducted_amount ? fmt(o.deducted_amount) : '—'}</div></div>
+            <div><h4>مبلغ باقی‌مانده جهت کسر (ریال)</h4><div>${o.remaining_amount ? fmt(o.remaining_amount) : 'مغایرتی باقی نمانده'}</div></div>
           </div>
         </div>
       </td>
@@ -1215,12 +1220,14 @@ function openAddModal(){
   document.getElementById('f_training').value = '';
   document.getElementById('f_mgmt').value = '';
   document.getElementById('f_salaryDeduction').value = '';
+  document.getElementById('f_deductedAmount').value = '';
+  document.getElementById('f_remainingAmount').value = '';
   document.getElementById('editOnlyFields').style.display = 'none';
   ALL_EDIT_FIELD_IDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.disabled = false; });
   document.getElementById('memberEditNote').style.display = 'none';
   document.getElementById('editModalOverlay').classList.add('show');
 }
-const ALL_EDIT_FIELD_IDS = ['f_order_no','f_packagei','f_line','f_company','f_agent','f_shift','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_sellerTicketNo','f_issue','f_issuance_result','f_status','f_training','f_trainingNotes','f_mgmt','f_mgmtNotes','f_salaryDeduction'];
+const ALL_EDIT_FIELD_IDS = ['f_order_no','f_packagei','f_line','f_company','f_agent','f_shift','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_sellerTicketNo','f_issue','f_issuance_result','f_status','f_training','f_trainingNotes','f_mgmt','f_mgmtNotes','f_salaryDeduction','f_deductedAmount'];
 const MEMBER_EDITABLE_FIELD_IDS = ['f_order_no','f_packagei','f_issue','f_issuance_result'];
 function applyRoleFieldRestrictions(){
   const isAdmin = currentUserRole === 'admin';
@@ -1253,6 +1260,8 @@ function openEditModal(id){
   document.getElementById('f_mgmt').value = o.mgmt_review||'';
   document.getElementById('f_mgmtNotes').value = o.mgmt_notes||'';
   document.getElementById('f_salaryDeduction').value = o.salary_deduction||'';
+  document.getElementById('f_deductedAmount').value = o.deducted_amount ? Number(o.deducted_amount).toLocaleString('en-US') : '';
+  document.getElementById('f_remainingAmount').value = o.remaining_amount ? Number(o.remaining_amount).toLocaleString('en-US') + ' ریال' : 'مغایرتی باقی نمانده';
   document.getElementById('f_issue').value = o.issue||'';
   document.getElementById('f_seller_result').value = o.seller_result||'';
   document.getElementById('f_sellerTicketNo').value = o.seller_ticket_no||'';
@@ -1292,6 +1301,7 @@ async function saveRow(){
     mgmt_review: document.getElementById('f_mgmt').value,
     mgmt_notes: document.getElementById('f_mgmtNotes').value.trim(),
     salary_deduction: document.getElementById('f_salaryDeduction').value,
+    deducted_amount: Number(document.getElementById('f_deductedAmount').value.replace(/,/g,''))||0,
     status: document.getElementById('f_status').value,
   };
   const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
@@ -1476,8 +1486,8 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','کاربر صدور','نوع خطا','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','وضعیت سفارش'];
-  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,normStatus(o.status)]);
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','کاربر صدور','نوع خطا','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
+  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,o.deducted_amount,o.remaining_amount,normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
     return /[",\n]/.test(s) ? `"${s}"` : s;
