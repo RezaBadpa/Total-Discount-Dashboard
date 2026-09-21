@@ -437,10 +437,10 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
             <th>شماره سفارش</th>
             <th>شرکت بیمه</th>
             <th>کاربر صدور</th>
-            <th>مبلغ (ریال)</th>
-            <th>کسر از حقوق</th>
+            <th>مبلغ مغایرت (ریال)</th>
             <th>مبلغ کسر شده (ریال)</th>
             <th>مبلغ باقی‌مانده جهت کسر (ریال)</th>
+            <th>کسر از حقوق</th>
             <th>وضعیت سفارش</th>
             <th>توضیحات</th>
             <th>عملیات</th>
@@ -1174,9 +1174,9 @@ function renderTable(){
       <td>${esc(o.company)}</td>
       <td>${esc(o.issuer_user)}</td>
       <td class="amount-cell">${fmt(o.amount)}</td>
-      <td>${esc(o.salary_deduction)||'—'}</td>
       <td class="amount-cell">${Number(o.deducted_amount) ? fmt(Number(o.deducted_amount)) : '—'}</td>
       <td class="amount-cell">${calcRemaining(o.amount, o.deducted_amount) ? fmt(calcRemaining(o.amount, o.deducted_amount)) : '—'}</td>
+      <td>${esc(o.salary_deduction)||'—'}</td>
       <td><span class="pill ${pillClass}">${esc(st)}</span></td>
       <td>
         <button class="desc-toggle-btn" id="descBtn-${o.id}" onclick="toggleDesc(${o.id})">
