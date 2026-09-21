@@ -1130,7 +1130,8 @@ function renderCharts(){
 
   // مقایسه جمع مبالغ تخفیف‌شده و کسر شده (نمودار میله‌ای عمودی، زمین تا بالا)
   const totalDiscounted = list.filter(o=>normStatus(o.status)==='تخفیف شد').reduce((s,o)=>s+(Number(o.amount)||0),0);
-  const totalDeducted = list.filter(o=>(o.salary_deduction||'').trim()==='کسر شد ):').reduce((s,o)=>s+(Number(o.amount)||0),0);
+  // جمع کسر شده = مجموع ستون «مبلغ کسر شده (ریال)» در موارد فیلترشده
+  const totalDeducted = list.reduce((s,o)=>s+(Number(o.deducted_amount)||0),0);
   destroyChart('deductVsDiscount');
   chartInstances.deductVsDiscount = new Chart(document.getElementById('chartDeductVsDiscount'), {
     type:'bar',
