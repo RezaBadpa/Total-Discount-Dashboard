@@ -491,7 +491,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_shift"><option value="صبح">☀️ صبح</option><option value="عصر">🌙 عصر</option></select>
         </div>
         <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
-        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this)"></div>
+        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this);updateRemainingField()"></div>
         <div class="field"><label>نوع خطا</label>
           <select id="f_errorType"><option value="">— نامشخص —</option><option value="بارمالی">بارمالی</option><option value="بدون بارمالی">بدون بارمالی</option></select>
         </div>
@@ -531,7 +531,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <div class="field"><label>کسر از حقوق</label>
             <select id="f_salaryDeduction"><option value="">— نامشخص —</option><option value="کسر شد ):">کسر شد ):</option><option value="کسر نشد (:">کسر نشد (:</option></select>
           </div>
-          <div class="field"><label>مبلغ کسر شده (ریال)</label><input id="f_deductedAmount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this)"></div>
+          <div class="field"><label>مبلغ کسر شده (ریال)</label><input id="f_deductedAmount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this);updateRemainingField()"></div>
           <div class="field"><label>مبلغ باقی‌مانده جهت کسر (ریال)</label><input id="f_remainingAmount" disabled placeholder="—"></div>
         </div>
       </div>
@@ -667,6 +667,17 @@ const GS_URL = 'https://script.google.com/macros/s/AKfycbwItCa1l7wPZvSF_AEM4WxyR
 const GS_TOKEN = '@Azki2026@Malii';
 // ================================================================================================
 
+// باقی‌مانده جهت کسر = مبلغ مغایرت − مبلغ کسر شده (فقط وقتی مبلغی کسر شده باشد؛ کمتر از صفر نمی‌شود)
+function calcRemaining(amount, deducted){
+  const a = Number(amount)||0, d = Number(deducted)||0;
+  return d > 0 ? Math.max(a - d, 0) : 0;
+}
+function updateRemainingField(){
+  const num = id => Number(String(document.getElementById(id).value).replace(/[^\d]/g,''))||0;
+  const d = num('f_deductedAmount');
+  const r = calcRemaining(num('f_amount'), d);
+  document.getElementById('f_remainingAmount').value = d > 0 ? (r > 0 ? r.toLocaleString('en-US') + ' ریال' : 'مغایرتی باقی نمانده') : '';
+}
 function normStatus(s){ return (s||'').trim(); }
 function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
 function esc(s){ const d=document.createElement('div'); d.textContent = s==null?'':String(s); return d.innerHTML; }
@@ -1170,7 +1181,7 @@ function renderTable(){
       <td><span class="pill ${pillClass}">${esc(st)}</span></td>
       <td>${esc(o.salary_deduction)||'—'}</td>
       <td class="amount-cell">${Number(o.deducted_amount) ? fmt(Number(o.deducted_amount)) : '—'}</td>
-      <td class="amount-cell">${Number(o.remaining_amount) ? fmt(Number(o.remaining_amount)) : '—'}</td>
+      <td class="amount-cell">${calcRemaining(o.amount, o.deducted_amount) ? fmt(calcRemaining(o.amount, o.deducted_amount)) : '—'}</td>
       <td>
         <button class="desc-toggle-btn" id="descBtn-${o.id}" onclick="toggleDesc(${o.id})">
           <span>جزئیات</span>
@@ -1307,7 +1318,7 @@ function openEditModal(id){
   document.getElementById('f_mgmtNotes').value = o.mgmt_notes||'';
   document.getElementById('f_salaryDeduction').value = o.salary_deduction||'';
   document.getElementById('f_deductedAmount').value = o.deducted_amount ? Number(o.deducted_amount).toLocaleString('en-US') : '';
-  document.getElementById('f_remainingAmount').value = o.remaining_amount ? Number(o.remaining_amount).toLocaleString('en-US') + ' ریال' : 'مغایرتی باقی نمانده';
+  updateRemainingField();
   document.getElementById('f_issue').value = o.issue||'';
   document.getElementById('f_seller_result').value = o.seller_result||'';
   document.getElementById('f_sellerTicketNo').value = o.seller_ticket_no||'';
@@ -1556,7 +1567,7 @@ async function removeAgentOption(name){
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
   const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','پکیجی یا الحاقیه (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','کاربر صدور','نوع خطا','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
-  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,o.deducted_amount,o.remaining_amount,normStatus(o.status)]);
+  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,o.deducted_amount,(calcRemaining(o.amount,o.deducted_amount)||''),normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
     return /[",\n]/.test(s) ? `"${s}"` : s;
