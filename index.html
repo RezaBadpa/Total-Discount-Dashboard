@@ -654,6 +654,7 @@ const PAGE_SIZE = 25;
 let chartInstances = {};
 let pendingDeleteId = null;
 let editingId = null;
+let saving = false; // جلوگیری از ذخیره‌ی دوباره با کلیک‌های پشت‌سرهم
 
 const STORE_ME = 'ozaki_disc_myname_v1'; // localStorage — این‌جا یک وب‌سایت واقعی است، نه Artifact
 let extraCompanies = [];
@@ -695,11 +696,12 @@ function orderMatchesPayload(row, payload){
   // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
   // کل ذخیره‌سازی «ناموفق» گزارش شود.
   const fields = ['order_no','line','company','agent','issue','seller_result','seller_ticket_no','issuance_result','packagei','shift','issuer_user','error_type','training_review','training_notes','mgmt_review','mgmt_notes','salary_deduction'];
-  if(Number(row.deducted_amount||0) !== Number(payload.deducted_amount||0)) return false;
+  const toNum = v => Number(String(v==null?'':v).replace(/[^\d.\-]/g,''))||0;
+  if(toNum(row.deducted_amount) !== toNum(payload.deducted_amount)) return false;
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
-  if(Number(row.amount)!==Number(payload.amount)) return false;
+  if(toNum(row.amount)!==toNum(payload.amount)) return false;
   if(normStatus(row.status)!==normStatus(payload.status)) return false;
   return true;
 }
@@ -709,18 +711,39 @@ function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return
 function localSet(key, val){ try{ localStorage.setItem(key, val); }catch(e){} }
 
 /* ---------------- Google Sheet backend (تنها منبع داده) ---------------- */
+function normalizeRow(r){ return { ...r, id: Number(r.id), amount: Number(r.amount)||0 }; }
 async function gsListRows(){
   const url = GS_URL + '?action=list&token=' + encodeURIComponent(GS_TOKEN);
   const res = await fetch(url, { method:'GET' });
   const json = await res.json();
   if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
-  return json.rows.map(r => ({ ...r, id: Number(r.id), amount: Number(r.amount)||0 }));
+  return json.rows.map(normalizeRow);
 }
-function gsCall(action, payload){
-  // نکته‌ی فنی: درخواست‌های POST مستقیم (fetch) به گوگل اپس‌اسکریپت به‌خاطر یک ریدایرکت
-  // داخلی گوگل هرگز واقعاً به تابع doPost نمی‌رسند (fetch آن‌ها را به GET خالی تبدیل می‌کند).
-  // برای دور زدن این محدودیت، از یک فرم HTML واقعی و مخفی استفاده می‌کنیم — این روش
-  // مثل ارسال یک فرم معمولی توسط کاربر عمل می‌کند و این مشکل را ندارد.
+// ردیف‌ها + لاگ‌ها در یک درخواست (قبلاً دو درخواست پشت‌سرهم بود)
+async function gsListAll(){
+  const url = GS_URL + '?action=listAll&token=' + encodeURIComponent(GS_TOKEN);
+  const res = await fetch(url, { method:'GET' });
+  const json = await res.json();
+  if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
+  return { rows: json.rows.map(normalizeRow), logs: json.logs || [] };
+}
+// ارسال درخواست نوشتن. روش اصلی: fetch با Content-Type = text/plain (این نوع «درخواست ساده» است،
+// preflight/CORS ندارد و پاسخ واقعی سرور خوانده می‌شود؛ پس دیگر لازم نیست کورکورانه ۱.۵ ثانیه
+// صبر کنیم و بعد کل شیت را دوباره بخوانیم). اگر مرورگر/شبکه اجازه ندهد، به روش قدیمی
+// (فرم مخفی) برمی‌گردیم تا چیزی خراب نشود.
+async function gsCall(action, payload){
+  const body = JSON.stringify({ action, token: GS_TOKEN, ...payload });
+  let json;
+  try{
+    const res = await fetch(GS_URL, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body });
+    json = await res.json();
+  }catch(e){
+    return gsCallViaHiddenForm(action, payload);
+  }
+  if(!json.ok){ throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت'); }
+  return json;
+}
+function gsCallViaHiddenForm(action, payload){
   return new Promise((resolve, reject)=>{
     try{
       document.getElementById('hpf_action').value = action;
@@ -728,8 +751,7 @@ function gsCall(action, payload){
       document.getElementById('hpf_payload').value = JSON.stringify(payload);
       document.getElementById('hiddenPostForm').action = GS_URL;
       document.getElementById('hiddenPostForm').submit();
-      // نمی‌توانیم پاسخ واقعی گوگل را از داخل iframe بخوانیم؛ کمی صبر می‌کنیم تا
-      // اسکریپت گوگل اجرا و روی شیت ذخیره شود، سپس با یک GET جدید نتیجه را تایید می‌کنیم.
+      // در این روش پاسخ گوگل قابل خواندن نیست؛ کمی صبر می‌کنیم و بعداً با بارگذاری مجدد تایید می‌شود.
       setTimeout(()=> resolve({ ok:true }), 1500);
     }catch(e){
       reject(new Error('ارسال درخواست به گوگل‌شیت ناموفق بود'));
@@ -801,7 +823,7 @@ async function tryEnter(){
   document.getElementById('app').style.display = 'block';
   document.getElementById('whoAmI').textContent = currentUser;
   await bootDashboard();
-  await pushLog('login', `${currentUser} (نام‌کاربری: ${currentUsername}) وارد داشبورد شد`);
+  pushLog('login', `${currentUser} (نام‌کاربری: ${currentUsername}) وارد داشبورد شد`);
 }
 
 async function loadOrders(showErrToast){
@@ -813,10 +835,33 @@ async function loadOrders(showErrToast){
     if(showErrToast) showToast('اتصال به گوگل‌شیت برقرار نشد: ' + e.message, true);
   }
 }
+// ردیف‌ها و لاگ‌ها با یک درخواست
+async function loadAllData(showErrToast){
+  try{
+    const res = await gsListAll();
+    orders = res.rows;
+    auditLog = res.logs;
+    window.__lastSyncOk = true;
+  }catch(e){
+    window.__lastSyncOk = false;
+    if(showErrToast) showToast('اتصال به گوگل‌شیت برقرار نشد: ' + e.message, true);
+  }
+}
+// فقط برای حالت پشتیبان (فرم مخفی): تا وقتی تغییر روی شیت دیده نشده چند بار دوباره می‌خواند
+async function reloadUntil(checkFn, tries=4, delayMs=1500){
+  for(let i=0;i<tries;i++){
+    await loadOrders(i===tries-1);
+    if(checkFn()) return true;
+    if(i<tries-1) await new Promise(r=>setTimeout(r, delayMs));
+  }
+  return false;
+}
+function warnFailedFields(list){
+  if(list && list.length) showToast('⚠️ این فیلدها روی شیت ذخیره نشدند: ' + list.map(k=>FIELD_LABELS[k]||k).join('، '), true);
+}
 
 async function bootDashboard(){
-  await loadOrders(true);
-  try{ auditLog = await gsGetLogs(); }catch(e){ auditLog = []; }
+  await loadAllData(true);
   try{
     const cfg = window.__cfg || {};
     extraCompanies = cfg.companies_extra ? JSON.parse(cfg.companies_extra) : [];
@@ -829,8 +874,7 @@ async function bootDashboard(){
 }
 
 async function refreshData(manual){
-  await loadOrders(!!manual);
-  try{ auditLog = await gsGetLogs(); }catch(e){}
+  await loadAllData(!!manual);
   renderSheetBadge();
   populateFilterOptions();
   populateFormSelects();
@@ -1271,6 +1315,7 @@ function openEditModal(id){
   document.getElementById('editModalOverlay').classList.add('show');
 }
 async function saveRow(){
+  if(saving) return;
   const orderNo = document.getElementById('f_order_no').value.trim();
   if(!orderNo){ showToast('شماره سفارش الزامی است', true); return; }
   // بررسی تکراری نبودن شماره سفارش (فقط هنگام افزودن مورد جدید، نه ویرایش)
@@ -1305,36 +1350,58 @@ async function saveRow(){
     status: document.getElementById('f_status').value,
   };
   const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
+  saving = true;
   try{
+    let failed = [];
     if(editingId){
-      await gsCall('update', { requester: currentUsername, id: editingId, data: payload });
-      await loadOrders(true);
-      // چون پاسخ POST قابل خواندن نیست، با یک بارگذاری مجدد بررسی می‌کنیم که تغییر واقعاً روی شیت اعمال شده
-      const check = orders.find(o=>o.id===editingId);
-      const applied = check && orderMatchesPayload(check, payload);
-      if(!applied){
-        showToast('⚠️ تغییر روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
-        return;
+      const res = await gsCall('update', {
+        requester: currentUsername,
+        id: editingId,
+        expectedOrderNo: beforeEdit ? beforeEdit.order_no : undefined,
+        data: payload
+      });
+      if(res.row){
+        // پاسخ واقعی سرور: همان سطرِ ذخیره‌شده را جایگزین می‌کنیم (بدون دانلود دوباره‌ی کل شیت)
+        const idx = orders.findIndex(o=>o.id===editingId);
+        if(idx>-1) orders[idx] = normalizeRow(res.row);
+        failed = res.failedFields || [];
+      } else {
+        // حالت پشتیبان (فرم مخفی): با چند بار بارگذاری مجدد بررسی می‌کنیم تغییر روی شیت اعمال شده
+        const applied = await reloadUntil(()=>{
+          const c = orders.find(o=>o.id===editingId);
+          return c && orderMatchesPayload(c, payload);
+        });
+        if(!applied){
+          showToast('⚠️ تغییر روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
+          return;
+        }
       }
       const diffText = buildDiffText(beforeEdit, payload);
-      await pushLog('edit', `${currentUser} مورد سفارش ${orderNo} را ویرایش کرد — ${diffText}`);
-      showToast('تغییرات ذخیره شد ✓');
+      pushLog('edit', `${currentUser} مورد سفارش ${orderNo} را ویرایش کرد — ${diffText}`);
+      if(failed.length) warnFailedFields(failed); else showToast('تغییرات ذخیره شد ✓');
     } else {
       const beforeCount = orders.length;
-      await gsCall('add', { data: payload });
-      await loadOrders(true);
-      if(orders.length <= beforeCount){
-        showToast('⚠️ مورد جدید روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
-        return;
+      const res = await gsCall('add', { data: payload });
+      if(res.row){
+        orders.push(normalizeRow(res.row));
+        failed = res.failedFields || [];
+      } else {
+        const ok = await reloadUntil(()=> orders.length > beforeCount);
+        if(!ok){
+          showToast('⚠️ مورد جدید روی شیت دیده نشد — لطفاً دوباره امتحان کنید', true);
+          return;
+        }
       }
-      await pushLog('add', `${currentUser} مورد سفارش ${orderNo} را اضافه کرد`);
-      showToast('مورد جدید اضافه شد ✓');
+      pushLog('add', `${currentUser} مورد سفارش ${orderNo} را اضافه کرد`);
+      if(failed.length) warnFailedFields(failed); else showToast('مورد جدید اضافه شد ✓');
     }
     closeModal('editModalOverlay');
     populateFilterOptions();
     applyFilters();
   }catch(e){
     showToast('ذخیره ناموفق بود: ' + e.message, true);
+  }finally{
+    saving = false;
   }
 }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
