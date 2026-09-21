@@ -440,10 +440,10 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
             <th>کاربر صدور</th>
             <th>نوع خطا</th>
             <th>مبلغ (ریال)</th>
-            <th>مبلغ کسر شده (ریال)</th>
-            <th>مبلغ باقی‌مانده جهت کسر (ریال)</th>
             <th>وضعیت سفارش</th>
             <th>کسر از حقوق</th>
+            <th>مبلغ کسر شده (ریال)</th>
+            <th>مبلغ باقی‌مانده جهت کسر (ریال)</th>
             <th>توضیحات</th>
             <th>عملیات</th>
           </tr>
@@ -1167,10 +1167,10 @@ function renderTable(){
       <td>${esc(o.issuer_user)}</td>
       <td>${esc(o.error_type)}</td>
       <td class="amount-cell">${fmt(o.amount)}</td>
-      <td class="amount-cell">${Number(o.deducted_amount) ? fmt(Number(o.deducted_amount)) : '—'}</td>
-      <td class="amount-cell">${Number(o.remaining_amount) ? fmt(Number(o.remaining_amount)) : '—'}</td>
       <td><span class="pill ${pillClass}">${esc(st)}</span></td>
       <td>${esc(o.salary_deduction)||'—'}</td>
+      <td class="amount-cell">${Number(o.deducted_amount) ? fmt(Number(o.deducted_amount)) : '—'}</td>
+      <td class="amount-cell">${Number(o.remaining_amount) ? fmt(Number(o.remaining_amount)) : '—'}</td>
       <td>
         <button class="desc-toggle-btn" id="descBtn-${o.id}" onclick="toggleDesc(${o.id})">
           <span>جزئیات</span>
@@ -1203,8 +1203,6 @@ function renderTable(){
             <div><h4>توضیحات تیم آموزش</h4><div>${esc(o.training_notes)||'—'}</div></div>
             <div><h4>بررسی مدیریت</h4><div>${esc(o.mgmt_review)||'—'}</div></div>
             <div><h4>توضیحات مدیریت</h4><div>${esc(o.mgmt_notes)||'—'}</div></div>
-            <div><h4>مبلغ کسر شده (ریال)</h4><div>${o.deducted_amount ? fmt(o.deducted_amount) : '—'}</div></div>
-            <div><h4>مبلغ باقی‌مانده جهت کسر (ریال)</h4><div>${o.remaining_amount ? fmt(o.remaining_amount) : 'مغایرتی باقی نمانده'}</div></div>
           </div>
         </div>
       </td>
