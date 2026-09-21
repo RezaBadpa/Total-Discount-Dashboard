@@ -68,7 +68,6 @@ body{
 }
 .gate-illus{
   display:block;width:88px;height:88px;margin:0 auto 14px;
-  filter:drop-shadow(0 0 12px rgba(0,200,255,0.55));
 }
 .gate-card h2{margin:0 0 6px;font-size:19px;color:#eaf9ff;text-shadow:0 0 14px rgba(0,200,255,0.65);}
 .gate-card p{margin:0 0 20px;color:#9fb8cc;font-size:13px;line-height:1.9;}
@@ -773,6 +772,7 @@ async function gsGetConfig(){
   const res = await fetch(url, { method:'GET' });
   const json = await res.json();
   if(!json.ok) throw new Error(json.error || 'خطای نامشخص از گوگل‌شیت');
+  window.__sheetOptions = json.options || {};   // گزینه‌های لیست کشویی خود شیت
   return json.config || {};
 }
 async function gsGetLogs(){
@@ -958,9 +958,17 @@ const ISSUE_LIST = [
 // گزینه‌های پایه‌ی شرکت بیمه و نماینده بیمه (دقیقاً مطابق فایل اکسل)؛ مقادیر موجود در شیت و لیست‌های اضافه‌شده از «مدیریت لیست‌ها» هم به آن‌ها اضافه می‌شود.
 const BASE_COMPANIES = ["رازی", "سینا", "هوشمند فردا", "ایران", "کوثر", "دی", "پارسیان"];
 const BASE_AGENTS = ["حامی همراه آگاه رازی", "امین مهرگان", "هوشمند فردا", "بیمه رازی(طاهرپور)", "آرامش آتیه بهبود", "تجارت الکترونیک نوین نار", "پرتو امید دی", "حمید قنبری"];
-function companyOptions(){ return [...new Set([...BASE_COMPANIES, ...orders.map(o=>o.company), ...extraCompanies].filter(Boolean))].sort(); }
-function agentOptions(){ return [...new Set([...BASE_AGENTS, ...orders.map(o=>o.agent), ...extraAgents].filter(Boolean))].sort(); }
-function issueOptions(){ return [...new Set([...ISSUE_LIST, ...orders.map(o=>o.issue)].filter(Boolean))]; }
+function sheetOpts(key){ return (window.__sheetOptions && window.__sheetOptions[key]) || []; }
+// اگر شیت لیست کشویی دارد، ترتیب همان لیست حفظ می‌شود و موارد دیگر (پایه، ثبت‌شده در ردیف‌ها، اضافه‌شده در «مدیریت لیست‌ها») بعد از آن‌ها می‌آیند.
+function mergeOptions(first, others, sortOthers){
+  const head = [...new Set(first.filter(Boolean))];
+  let rest = [...new Set(others.filter(Boolean))].filter(v=>!head.includes(v));
+  if(sortOthers) rest = rest.sort();
+  return [...head, ...rest];
+}
+function companyOptions(){ return mergeOptions(sheetOpts('company'), [...BASE_COMPANIES, ...orders.map(o=>o.company), ...extraCompanies], true); }
+function agentOptions(){ return mergeOptions(sheetOpts('agent'), [...BASE_AGENTS, ...orders.map(o=>o.agent), ...extraAgents], true); }
+function issueOptions(){ return mergeOptions(sheetOpts('issue'), [...ISSUE_LIST, ...orders.map(o=>o.issue)], false); }
 function populateFilterOptions(){
   const companies = companyOptions();
   const statuses = STATUS_LIST;
