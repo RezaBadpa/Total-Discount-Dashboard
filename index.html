@@ -478,14 +478,6 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
       </div>
       <div class="form-grid">
         <div class="field"><label>شماره سفارش</label><input id="f_order_no"></div>
-        <div class="field">
-          <label>نحوه رفع مغایرت</label>
-          <select id="f_resolutionMethod" onchange="toggleResolutionFields()">
-            <option value="تخفیف روی پکیجی یا سفارش">تخفیف روی پکیجی یا سفارش</option>
-            <option value="پرداخت کارت به کارت">پرداخت کارت به کارت</option>
-          </select>
-        </div>
-        <div class="field" id="f_packagei_wrap"><label>پکیجی یا سفارش (جهت تخفیف)</label><input id="f_packagei"></div>
         <div class="field"><label>رشته بیمه</label>
           <select id="f_line">
             <option value="خودرویی - ثالث">خودرویی - ثالث</option>
@@ -503,11 +495,6 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_shift"><option value="صبح">☀️ صبح</option><option value="عصر">🌙 عصر</option></select>
         </div>
         <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
-        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this);updateRemainingField()"></div>
-        <div class="field"><label>نوع خطا</label>
-          <select id="f_errorType"><option value="">— نامشخص —</option><option value="بارمالی">بارمالی</option><option value="بدون بارمالی">بدون بارمالی</option></select>
-        </div>
-        <div class="field"><label>کاربر صدور</label><input id="f_issuerUser"></div>
         <div class="field"><label>کانال ورودی</label>
           <select id="f_seller_result">
             <option value="سفارش الحاقیه (ایجنت)">سفارش الحاقیه (ایجنت)</option>
@@ -516,6 +503,19 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           </select>
         </div>
         <div class="field"><label>شماره سفارش الحاقیه - تیکت</label><input id="f_sellerTicketNo"></div>
+        <div class="field"><label>نوع خطا</label>
+          <select id="f_errorType"><option value="">— نامشخص —</option><option value="بارمالی">بارمالی</option><option value="بدون بارمالی">بدون بارمالی</option></select>
+        </div>
+        <div class="field"><label>کاربر صدور</label><input id="f_issuerUser"></div>
+        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this);updateRemainingField()"></div>
+        <div class="field">
+          <label>نحوه رفع مغایرت</label>
+          <select id="f_resolutionMethod" onchange="toggleResolutionFields()">
+            <option value="تخفیف روی پکیجی یا سفارش">تخفیف روی پکیجی یا سفارش</option>
+            <option value="پرداخت کارت به کارت">پرداخت کارت به کارت</option>
+          </select>
+        </div>
+        <div class="field" id="f_packagei_wrap"><label>پکیجی یا سفارش (جهت تخفیف)</label><input id="f_packagei"></div>
         <div class="field full"><label>نوع مغایرت (شرح خلاصه)</label>
           <select id="f_issue"></select>
         </div>
@@ -1244,10 +1244,10 @@ function renderTable(){
             <div><h4>نماینده بیمه</h4><div>${esc(o.agent)||'—'}</div></div>
             <div><h4>شیفت صدور الحاقیه</h4><div>${o.shift==='عصر' ? '🌙 عصر' : '☀️ صبح'}</div></div>
             <div><h4>نحوه رفع مغایرت</h4><div>${esc(o.resolution_method)||'—'}</div></div>
-            ${o.resolution_method !== 'پرداخت کارت به کارت' ? `<div><h4>پکیجی یا سفارش (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div></div>` : ''}
             <div><h4>کانال ورودی</h4><div>${esc(o.seller_result)||'—'}</div></div>
             <div><h4>شماره سفارش الحاقیه - تیکت</h4><div class="mono">${esc(o.seller_ticket_no)||'—'}</div></div>
           </div>
+          ${o.resolution_method !== 'پرداخت کارت به کارت' ? `<h4 style="margin-top:12px;">پکیجی یا سفارش (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div>` : ''}
           <h4 style="margin-top:12px;">نوع مغایرت (شرح خلاصه)</h4>
           <div>${esc(o.issue)||'—'}</div>
           <h4 style="margin-top:12px;">توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</h4>
