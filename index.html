@@ -535,10 +535,14 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <div class="field full" style="border-top:1px dashed var(--border);padding-top:14px;margin-top:2px;">
             <label style="color:var(--muted2);">فیلدهای زیر فقط هنگام ویرایش یک سفارش موجود قابل‌تغییرند</label>
           </div>
-          <div class="field"><label>بررسی تیم آموزش</label><select id="f_training"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-          <div class="field"><label>توضیحات تیم آموزش</label><input id="f_trainingNotes"></div>
-          <div class="field"><label>بررسی مدیریت</label><select id="f_mgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
-          <div class="field"><label>توضیحات مدیریت</label><input id="f_mgmtNotes"></div>
+          <div class="field"><label>کارشناس آموزش</label>
+            <select id="f_trainingSpecialist">
+              <option value="">— نامشخص —</option>
+              <option value="شهرزد مختاری">شهرزد مختاری</option>
+              <option value="غزل فردی">غزل فردی</option>
+              <option value="الهام اصلی">الهام اصلی</option>
+            </select>
+          </div>
           <div class="field">
             <label>وضعیت فیدبک</label>
             <div class="feedback-toggle" id="f_feedbackWrap">
@@ -547,6 +551,10 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
             </div>
             <input type="hidden" id="f_feedbackStatus" value="">
           </div>
+          <div class="field"><label>بررسی تیم آموزش</label><select id="f_training"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+          <div class="field"><label>توضیحات تیم آموزش</label><input id="f_trainingNotes"></div>
+          <div class="field"><label>بررسی مدیریت</label><select id="f_mgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
+          <div class="field"><label>توضیحات مدیریت</label><input id="f_mgmtNotes"></div>
           <div class="field"><label>وضعیت سفارش</label>
             <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="بررسی مجدد - معلق">بررسی مجدد - معلق</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="عدم تایید آموزش">عدم تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option></select>
           </div>
@@ -725,7 +733,7 @@ const FIELD_LABELS = {
   order_no: 'شماره سفارش', line: 'رشته بیمه', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ',
   issue: 'نوع مغایرت', seller_result: 'کانال ورودی', seller_ticket_no: 'شماره سفارش الحاقیه - تیکت', issuance_result: 'توضیحات',
   resolution_method: 'نحوه رفع مغایرت', packagei: 'پکیجی/سفارش', amount: 'مبلغ', shift: 'شیفت', issuer_user: 'کاربر صدور', error_type: 'نوع خطا',
-  training_review: 'بررسی تیم آموزش', training_notes: 'توضیحات تیم آموزش',
+  training_specialist: 'کارشناس آموزش', training_review: 'بررسی تیم آموزش', training_notes: 'توضیحات تیم آموزش',
   mgmt_review: 'بررسی مدیریت', mgmt_notes: 'توضیحات مدیریت', feedback_status: 'وضعیت فیدبک', salary_deduction: 'کسر از حقوق', deducted_amount: 'مبلغ کسر شده', status: 'وضعیت سفارش'
 };
 function buildDiffText(oldObj, payload){
@@ -743,7 +751,7 @@ function orderMatchesPayload(row, payload){
   // فیلد 'date' به‌خاطر محدودیت «Column type» گوگل‌شیت هیچ‌وقت نوشته نمی‌شود؛
   // به همین دلیل از مقایسه‌ی سخت‌گیرانه کنار گذاشته شده تا این یک مورد باعث نشود
   // کل ذخیره‌سازی «ناموفق» گزارش شود.
-  const fields = ['order_no','resolution_method','line','company','agent','issue','seller_result','seller_ticket_no','issuance_result','packagei','shift','issuer_user','error_type','training_review','training_notes','mgmt_review','mgmt_notes','feedback_status','salary_deduction'];
+  const fields = ['order_no','resolution_method','line','company','agent','issue','seller_result','seller_ticket_no','issuance_result','packagei','shift','issuer_user','error_type','training_specialist','training_review','training_notes','mgmt_review','mgmt_notes','feedback_status','salary_deduction'];
   const toNum = v => Number(String(v==null?'':v).replace(/[^\d.\-]/g,''))||0;
   if(toNum(row.deducted_amount) !== toNum(payload.deducted_amount)) return false;
   for(const f of fields){
@@ -1090,7 +1098,7 @@ function applyFilters(){
       if(far==='30-' && !(amtM>30)) return false;
     }
     if(q){
-      const hay = [o.order_no,o.issue,o.seller_result,o.issuance_result,o.packagei,o.agent,o.company,o.issuer_user].join(' ').toLowerCase();
+      const hay = [o.order_no,o.issue,o.seller_result,o.issuance_result,o.seller_ticket_no,o.packagei,o.agent,o.company,o.issuer_user].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -1281,10 +1289,11 @@ function renderTable(){
           <h4 style="margin-top:12px;">توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</h4>
           <div>${esc(o.issuance_result)||'—'}</div>
           <div class="row2">
+            <div><h4>کارشناس آموزش</h4><div>${esc(o.training_specialist)||'—'}</div></div>
+            <div><h4>وضعیت فیدبک</h4><div>${o.feedback_status==='Yes' ? `<span class="feedback-badge yes">✓</span>` : (o.feedback_status==='No' ? `<span class="feedback-badge no">✗</span>` : '—')}</div></div>
             <div><h4>بررسی تیم آموزش</h4><div>${esc(o.training_review)||'—'}</div></div>
             <div><h4>توضیحات تیم آموزش</h4><div>${esc(o.training_notes)||'—'}</div></div>
             <div><h4>بررسی مدیریت</h4><div>${esc(o.mgmt_review)||'—'}</div></div>
-            <div><h4>وضعیت فیدبک</h4><div>${o.feedback_status==='Yes' ? `<span class="feedback-badge yes">✓</span>` : (o.feedback_status==='No' ? `<span class="feedback-badge no">✗</span>` : '—')}</div></div>
             <div><h4>توضیحات مدیریت</h4><div>${esc(o.mgmt_notes)||'—'}</div></div>
           </div>
         </div>
@@ -1340,6 +1349,7 @@ function openAddModal(){
   document.getElementById('f_resolutionMethod').value = 'تخفیف روی پکیجی یا سفارش';
   toggleResolutionFields();
   setFeedbackStatus('');
+  document.getElementById('f_trainingSpecialist').value = '';
   document.getElementById('f_line').value = 'خودرویی - ثالث';
   document.getElementById('f_company').selectedIndex = 0;
   document.getElementById('f_agent').value = '';
@@ -1359,7 +1369,7 @@ function openAddModal(){
   document.getElementById('memberEditNote').style.display = 'none';
   document.getElementById('editModalOverlay').classList.add('show');
 }
-const ALL_EDIT_FIELD_IDS = ['f_order_no','f_resolutionMethod','f_packagei','f_line','f_company','f_agent','f_shift','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_sellerTicketNo','f_issue','f_issuance_result','f_status','f_training','f_trainingNotes','f_mgmt','f_mgmtNotes','f_feedbackYes','f_feedbackNo','f_salaryDeduction','f_deductedAmount'];
+const ALL_EDIT_FIELD_IDS = ['f_order_no','f_resolutionMethod','f_packagei','f_line','f_company','f_agent','f_shift','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_sellerTicketNo','f_issue','f_issuance_result','f_status','f_trainingSpecialist','f_feedbackYes','f_feedbackNo','f_training','f_trainingNotes','f_mgmt','f_mgmtNotes','f_salaryDeduction','f_deductedAmount'];
 const MEMBER_EDITABLE_FIELD_IDS = ['f_order_no','f_resolutionMethod','f_packagei','f_issue','f_issuance_result'];
 function applyRoleFieldRestrictions(){
   const isAdmin = currentUserRole === 'admin';
@@ -1393,6 +1403,7 @@ function openEditModal(id){
   document.getElementById('f_trainingNotes').value = o.training_notes||'';
   document.getElementById('f_mgmt').value = o.mgmt_review||'';
   setFeedbackStatus(o.feedback_status||'');
+  document.getElementById('f_trainingSpecialist').value = o.training_specialist||'';
   document.getElementById('f_mgmtNotes').value = o.mgmt_notes||'';
   document.getElementById('f_salaryDeduction').value = o.salary_deduction||'';
   document.getElementById('f_deductedAmount').value = o.deducted_amount ? Number(o.deducted_amount).toLocaleString('en-US') : '';
@@ -1437,6 +1448,7 @@ async function saveRow(){
     training_notes: document.getElementById('f_trainingNotes').value.trim(),
     mgmt_review: document.getElementById('f_mgmt').value,
     feedback_status: document.getElementById('f_feedbackStatus').value,
+    training_specialist: document.getElementById('f_trainingSpecialist').value,
     mgmt_notes: document.getElementById('f_mgmtNotes').value.trim(),
     salary_deduction: document.getElementById('f_salaryDeduction').value,
     deducted_amount: Number(document.getElementById('f_deductedAmount').value.replace(/,/g,''))||0,
@@ -1646,8 +1658,8 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','نحوه رفع مغایرت','پکیجی یا سفارش (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','کاربر صدور','نوع خطا','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','وضعیت فیدبک','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
-  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.resolution_method,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.feedback_status,o.salary_deduction,o.deducted_amount,(calcRemaining(o.amount,o.deducted_amount)||''),normStatus(o.status)]);
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','نحوه رفع مغایرت','پکیجی یا سفارش (جهت تخفیف)','مبلغ مغایرت (ریال)','شیفت صدور الحاقیه','کاربر صدور','نوع خطا','کارشناس آموزش','وضعیت فیدبک','بررسی تیم آموزش','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
+  const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.resolution_method,o.packagei,o.amount,o.shift,o.issuer_user,o.error_type,o.training_specialist,o.feedback_status,o.training_review,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,o.deducted_amount,(calcRemaining(o.amount,o.deducted_amount)||''),normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
     return /[",\n]/.test(s) ? `"${s}"` : s;
