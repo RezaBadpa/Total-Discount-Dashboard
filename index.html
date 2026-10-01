@@ -438,7 +438,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
       <div class="chart-box tall"><canvas id="chartCompany"></canvas></div>
     </div>
     <div class="panel">
-      <div class="panel-title"><span class="pic">💰</span> مقایسه مبالغ تخفیف شده و کسر شده (ریال)</div>
+      <div class="panel-title"><span class="pic">💰</span> مقایسه مبالغ تخفیف‌شده و کسر شده (ریال)</div>
       <div class="chart-box tall"><canvas id="chartDeductVsDiscount"></canvas></div>
     </div>
   </div>
@@ -597,7 +597,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <div class="field"><label>بررسی مدیریت</label><select id="f_mgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
           <div class="field"><label>توضیحات مدیریت</label><input id="f_mgmtNotes"></div>
           <div class="field"><label>وضعیت سفارش</label>
-            <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="بررسی مجدد - معلق">بررسی مجدد - معلق</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="عدم تایید آموزش">عدم تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد">تخفیف شد</option><option value="در انتظار کسر از حقوق">در انتظار کسر از حقوق</option></select>
+            <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="بررسی مجدد - معلق">بررسی مجدد - معلق</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="عدم تایید آموزش">عدم تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد - کسر شد">تخفیف شد - کسر شد</option><option value="در انتظار کسر از حقوق">در انتظار کسر از حقوق</option></select>
           </div>
           <div class="field"><label>کسر از حقوق</label>
             <select id="f_salaryDeduction"><option value="">— نامشخص —</option><option value="کسر شد ):">کسر شد ):</option><option value="کسر نشد (:">کسر نشد (:</option></select>
@@ -699,10 +699,10 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
 <script>
 const MONTHS_FA = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 // ترتیب اولویت وضعیت‌ها در نمایش و منطق پیش‌فرض؛ هر وضعیت جدید باید همین‌جا اضافه شود
-const STATUS_LIST = ['در انتظار تایید آموزش','بررسی مجدد - معلق','در انتظار تخفیف','عدم تایید آموزش','پرداخت شد','تخفیف شد','در انتظار کسر از حقوق'];
+const STATUS_LIST = ['در انتظار تایید آموزش','بررسی مجدد - معلق','در انتظار تخفیف','عدم تایید آموزش','پرداخت شد','تخفیف شد - کسر شد','در انتظار کسر از حقوق'];
 const STATUS_COLORS = {
   'پرداخت شد': '#3ab7ff',
-  'تخفیف شد': '#22e6ae',
+  'تخفیف شد - کسر شد': '#22e6ae',
   'در انتظار تخفیف': '#ffb648',
   'بررسی مجدد - معلق': '#ff5c93',
   'در انتظار تایید آموزش': '#a06bff',
@@ -711,7 +711,7 @@ const STATUS_COLORS = {
 };
 const STATUS_CLASS = {
   'پرداخت شد': 'paid',
-  'تخفیف شد': 'discounted',
+  'تخفیف شد - کسر شد': 'discounted',
   'در انتظار تخفیف': 'wait-discount',
   'بررسی مجدد - معلق': 'wait-pay',
   'در انتظار تایید آموزش': 'wait-training',
@@ -742,16 +742,17 @@ const GS_URL = 'https://script.google.com/macros/s/AKfycbwItCa1l7wPZvSF_AEM4WxyR
 const GS_TOKEN = '@Azki2026@Malii';
 // ================================================================================================
 
-// باقی‌مانده جهت کسر = مبلغ مغایرت − مبلغ کسر شده (فقط وقتی مبلغی کسر شده باشد؛ کمتر از صفر نمی‌شود)
+// باقی‌مانده جهت کسر = مبلغ مغایرت − مبلغ کسر شده (همیشه محاسبه می‌شود، حتی اگر هنوز
+// چیزی کسر نشده باشد — در آن حالت برابر کل مبلغ مغایرت است، نه خالی)
 function calcRemaining(amount, deducted){
   const a = Number(amount)||0, d = Number(deducted)||0;
-  return d > 0 ? Math.max(a - d, 0) : 0;
+  return Math.max(a - d, 0);
 }
 function updateRemainingField(){
   const num = id => Number(String(document.getElementById(id).value).replace(/[^\d]/g,''))||0;
-  const d = num('f_deductedAmount');
-  const r = calcRemaining(num('f_amount'), d);
-  document.getElementById('f_remainingAmount').value = d > 0 ? (r > 0 ? r.toLocaleString('en-US') + ' ریال' : 'مغایرتی باقی نمانده') : '';
+  const a = num('f_amount');
+  const r = calcRemaining(a, num('f_deductedAmount'));
+  document.getElementById('f_remainingAmount').value = a > 0 ? r.toLocaleString('en-US') + ' ریال' : '';
 }
 function normStatus(s){ return (s||'').trim(); }
 function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
@@ -1359,7 +1360,7 @@ function applyFilters(){
     }
     return true;
   });
-  // اولویت نمایش بر اساس وضعیت: در انتظار تایید آموزش، بررسی مجدد - معلق، در انتظار تخفیف، عدم تایید آموزش، پرداخت شد، تخفیف شد، در انتظار کسر از حقوق
+  // اولویت نمایش بر اساس وضعیت: در انتظار تایید آموزش، بررسی مجدد - معلق، در انتظار تخفیف، عدم تایید آموزش، پرداخت شد، تخفیف شد - کسر شد، در انتظار کسر از حقوق
   // و در هر گروه، جدیدترین سفارش (آخرین سطر ثبت‌شده در شیت) اول نمایش داده شود
   filtered.sort((a,b)=>{
     let pa = STATUS_LIST.indexOf(normStatus(a.status)); if(pa<0) pa = 99;
@@ -1376,7 +1377,7 @@ function applyFilters(){
 function computeStats(list){
   const total = list.length;
   const totalAmount = list.reduce((s,o)=>s+(Number(o.amount)||0),0);
-  const RESOLVED_STATUSES = ['تخفیف شد','پرداخت شد'];
+  const RESOLVED_STATUSES = ['تخفیف شد - کسر شد','پرداخت شد'];
   const UNRESOLVED_STATUSES = ['در انتظار تایید آموزش','در انتظار تخفیف','بررسی مجدد - معلق','عدم تایید آموزش','در انتظار کسر از حقوق'];
   const resolved = list.filter(o=>RESOLVED_STATUSES.includes(normStatus(o.status)));
   const unresolved = list.filter(o=>UNRESOLVED_STATUSES.includes(normStatus(o.status)));
@@ -1464,7 +1465,7 @@ function renderCharts(){
   });
 
   // مقایسه جمع مبالغ تخفیف‌شده و کسر شده (نمودار میله‌ای عمودی، زمین تا بالا)
-  const totalDiscounted = list.filter(o=>normStatus(o.status)==='تخفیف شد').reduce((s,o)=>s+(Number(o.amount)||0),0);
+  const totalDiscounted = list.filter(o=>normStatus(o.status)==='تخفیف شد - کسر شد').reduce((s,o)=>s+(Number(o.amount)||0),0);
   // جمع کسر شده = مجموع ستون «مبلغ کسر شده (ریال)» در موارد فیلترشده
   const totalDeducted = list.reduce((s,o)=>s+(Number(o.deducted_amount)||0),0);
   destroyChart('deductVsDiscount');
