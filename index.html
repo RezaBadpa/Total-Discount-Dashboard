@@ -285,6 +285,48 @@ tbody tr.expanded-row td{border-bottom:none;}
 .field textarea{resize:vertical;min-height:70px;line-height:1.8;}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
 .field input:disabled,.field select:disabled,.field textarea:disabled{opacity:.45;cursor:not-allowed;background:#0a0f15;}
+.field input[readonly]{cursor:pointer;}
+
+/* تقویم شمسی (جلالی) برای فیلد تاریخ */
+.jdp{
+  position:fixed;display:none;z-index:2000;width:272px;
+  background:var(--card2);border:1px solid var(--border);border-radius:14px;
+  box-shadow:var(--shadow);padding:12px;direction:rtl;font-family:inherit;
+}
+.jdp-today-row{
+  display:flex;align-items:center;gap:6px;justify-content:center;
+  font-size:12px;color:var(--muted);padding:2px 4px 10px;border-bottom:1px solid var(--border-soft);
+  margin-bottom:10px;cursor:pointer;
+}
+.jdp-today-row:hover{color:var(--accent);}
+.jdp-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.jdp-arrow{
+  width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:#0a0f15;
+  color:var(--accent);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.jdp-arrow:hover{border-color:var(--accent);}
+.jdp-nav-pill{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  border:1px solid var(--border);border-radius:9px;background:#0a0f15;padding:5px 6px;min-width:0;
+}
+.jdp-nav-pill select{
+  background:transparent;border:none;color:var(--text);font-family:inherit;font-size:12.5px;
+  outline:none;cursor:pointer;text-align:center;max-width:95px;
+}
+.jdp-nav-pill select option{background:var(--card2);color:var(--text);}
+.jdp-divider{width:1px;height:16px;background:var(--border);flex-shrink:0;}
+.jdp-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--muted);margin-bottom:5px;}
+.jdp-weekdays .jdp-fri{color:var(--pink);}
+.jdp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.jdp-day{
+  height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;
+  font-size:12px;color:var(--text);background:none;border:1px solid transparent;cursor:pointer;font-family:inherit;padding:0;
+}
+button.jdp-day:hover{background:#0f161e;border-color:var(--border);}
+.jdp-day.jdp-faded{color:var(--muted2);cursor:default;}
+.jdp-day.jdp-fri{color:var(--pink);}
+.jdp-day.jdp-today{border-color:var(--accent);}
+.jdp-day.jdp-selected{background:var(--accent);color:#03111f;font-weight:700;border-color:var(--accent);}
 .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--border);}
 .warn-icon{width:52px;height:52px;border-radius:14px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
 .confirm-text{text-align:center;color:var(--muted);font-size:13.5px;line-height:1.9;margin-bottom:4px;}
@@ -503,7 +545,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_agent"></select>
         </div>
         <div class="field"><label>کاربر ثبت اولیه</label><input id="f_initialUser" disabled placeholder="----"></div>
-        <div class="field"><label>تاریخ (مثال: 3/1/1405)</label><input id="f_date" placeholder="M/D/1405"></div>
+        <div class="field"><label>تاریخ</label><input id="f_date" readonly placeholder="انتخاب تاریخ" onclick="openDatePicker(this)"></div>
         <div class="field"><label>کانال ورودی</label>
           <select id="f_seller_result">
             <option value="سفارش الحاقیه (ایجنت)">سفارش الحاقیه (ایجنت)</option>
@@ -732,6 +774,200 @@ function setFeedbackStatus(val){
   document.getElementById('f_feedbackYes').classList.toggle('active', val==='Yes');
   document.getElementById('f_feedbackNo').classList.toggle('active', val==='No');
 }
+/* ===================== تقویم شمسی (جلالی) — بدون کتابخانه‌ی خارجی ===================== */
+const FA_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+function toFaDigits(n){ return String(n).replace(/[0-9]/g, d=>FA_DIGITS[d]); }
+const JALALI_MONTH_NAMES = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+const JALALI_WEEKDAYS = ['ش','ی','د','س','چ','پ','ج']; // شنبه تا جمعه
+const JALALI_BREAKS = [-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+function jDiv(a,b){ const q=a/b; return q>=0 ? Math.trunc(q) : -Math.trunc(-q); }
+function jMod(a,b){ return a - jDiv(a,b)*b; }
+// الگوریتم استاندارد تبدیل جلالی↔میلادی (jalaali)
+function jalCal(jy){
+  const bl = JALALI_BREAKS.length;
+  let gy = jy + 621, leapJ = -14, jp = JALALI_BREAKS[0], jm, jump, n, leap;
+  for(let i=1;i<bl;i++){
+    jm = JALALI_BREAKS[i]; jump = jm - jp;
+    if(jy < jm) break;
+    leapJ += jDiv(jump,33)*8 + jDiv(jMod(jump,33),4);
+    jp = jm;
+  }
+  n = jy - jp;
+  leapJ += jDiv(n,33)*8 + jDiv(jMod(n+3,33),4);
+  if(jMod(jump,33)===4 && jump-n===4) leapJ += 1;
+  const leapG = jDiv(gy,4) - jDiv((jDiv(gy,100)+1)*3,4) - 150;
+  const march = 20 + leapJ - leapG;
+  if(jump-n < 6) n = n - jump + jDiv(jump+4,33)*33;
+  leap = jMod(jMod(n+1,33)-1,4);
+  if(leap===-1) leap = 4;
+  return { leap, gy, march };
+}
+function g2d(gy,gm,gd){
+  let d = jDiv((gy+jDiv(gm-8,6)+100100)*1461,4) + jDiv(153*jMod(gm+9,12)+2,5) + gd - 34840408;
+  d = d - jDiv(jDiv(gy+100100+jDiv(gm-8,6),100)*3,4) + 752;
+  return d;
+}
+function d2g(jdn){
+  let j = 4*jdn + 139361631;
+  j = j + jDiv(jDiv(4*jdn+183187720,146097)*3,4)*4 - 3908;
+  const i = jDiv(jMod(j,1461),4)*5 + 308;
+  const gd = jDiv(jMod(i,153),5) + 1;
+  const gm = jMod(jDiv(i,153),12) + 1;
+  const gy = jDiv(j,1461) - 100100 + jDiv(8-gm,6);
+  return { gy, gm, gd };
+}
+function j2d(jy,jm,jd){
+  const r = jalCal(jy);
+  return g2d(r.gy,3,r.march) + (jm-1)*31 - jDiv(jm,7)*(jm-7) + jd - 1;
+}
+function d2j(jdn){
+  const gy = d2g(jdn).gy;
+  let jy = gy - 621;
+  const r = jalCal(jy);
+  const jdn1f = g2d(gy,3,r.march);
+  let k = jdn - jdn1f;
+  if(k >= 0){
+    if(k <= 185) return { jy, jm: 1+jDiv(k,31), jd: jMod(k,31)+1 };
+    k -= 186;
+  } else {
+    jy -= 1; k += 179;
+    if(r.leap === 1) k += 1;
+  }
+  return { jy, jm: 7+jDiv(k,30), jd: jMod(k,30)+1 };
+}
+function isLeapJalaliYear(jy){ return jalCal(jy).leap === 0; }
+function jalaliMonthLength(jy,jm){
+  if(jm <= 6) return 31;
+  if(jm <= 11) return 30;
+  return isLeapJalaliYear(jy) ? 30 : 29;
+}
+function jalaliWeekday(jy,jm,jd){ return jMod(j2d(jy,jm,jd)+2, 7); } // 0=شنبه ... 6=جمعه
+function todayJalali(){
+  const now = new Date();
+  return d2j(g2d(now.getFullYear(), now.getMonth()+1, now.getDate()));
+}
+function parseDateField(str){
+  const m = String(str||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{3,4})$/);
+  if(!m) return null;
+  return { jm: parseInt(m[1],10), jd: parseInt(m[2],10), jy: parseInt(m[3],10) };
+}
+function formatDateField(jy,jm,jd){ return `${jm}/${jd}/${jy}`; }
+
+/* --------------- رابط کاربری تقویم (popup) --------------- */
+let dpState = { jy:0, jm:0, jd:0, targetInput:null };
+function ensureDatePickerEl(){
+  let el = document.getElementById('jalaliDatePicker');
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'jalaliDatePicker';
+  el.className = 'jdp';
+  document.body.appendChild(el);
+  document.addEventListener('mousedown', (e)=>{
+    if(el.style.display==='block' && !el.contains(e.target) && e.target !== dpState.targetInput){
+      closeDatePicker();
+    }
+  });
+  // اگر صفحه یا داخل مودال اسکرول شود، تقویم (که fixed است) هم‌راستا نمی‌ماند؛ برای همین می‌بندیمش.
+  document.addEventListener('scroll', ()=> closeDatePicker(), true);
+  return el;
+}
+function openDatePicker(inputEl){
+  if(inputEl.disabled) return;
+  const el = ensureDatePickerEl();
+  dpState.targetInput = inputEl;
+  const parsed = parseDateField(inputEl.value) || todayJalali();
+  dpState.jy = parsed.jy; dpState.jm = parsed.jm; dpState.jd = parsed.jd;
+  renderDatePicker();
+  el.style.display = 'block';
+  const r = inputEl.getBoundingClientRect();
+  const popH = el.offsetHeight || 320;
+  const popW = el.offsetWidth || 272;
+  let top = r.bottom + 6;
+  if(top + popH > window.innerHeight - 10) top = Math.max(10, r.top - popH - 6);
+  let left = r.left;
+  if(left + popW > window.innerWidth - 10) left = window.innerWidth - popW - 10;
+  if(left < 10) left = 10;
+  el.style.top = top + 'px';
+  el.style.left = left + 'px';
+}
+function closeDatePicker(){
+  const el = document.getElementById('jalaliDatePicker');
+  if(el) el.style.display = 'none';
+}
+function dpNavMonth(delta){
+  // محاسبه با حساب پیمانه‌ای تا برای هر مقدار delta (نه فقط ۱±) درست کار کند
+  const total = dpState.jy*12 + (dpState.jm-1) + delta;
+  dpState.jy = Math.floor(total/12);
+  dpState.jm = ((total%12)+12)%12 + 1;
+  renderDatePicker();
+}
+function dpSetYear(v){ dpState.jy = parseInt(v,10); renderDatePicker(); }
+function dpSetMonth(v){ dpState.jm = parseInt(v,10); renderDatePicker(); }
+function dpGoToday(){
+  const t = todayJalali();
+  dpState.jy = t.jy; dpState.jm = t.jm;
+  renderDatePicker();
+}
+function dpSelectDay(jy,jm,jd){
+  if(dpState.targetInput){
+    dpState.targetInput.value = formatDateField(jy,jm,jd);
+  }
+  closeDatePicker();
+}
+function renderDatePicker(){
+  const el = document.getElementById('jalaliDatePicker');
+  if(!el) return;
+  const { jy, jm, jd:selJd } = dpState;
+  const today = todayJalali();
+  const firstWd = jalaliWeekday(jy,jm,1);
+  const len = jalaliMonthLength(jy,jm);
+  const prevJy = jm===1 ? jy-1 : jy, prevJm = jm===1 ? 12 : jm-1;
+  const prevLen = jalaliMonthLength(prevJy,prevJm);
+
+  let daysHtml = '';
+  for(let i=0;i<firstWd;i++){
+    daysHtml += `<div class="jdp-day jdp-faded">${toFaDigits(prevLen-firstWd+i+1)}</div>`;
+  }
+  for(let d=1; d<=len; d++){
+    const wd = (firstWd + d - 1) % 7;
+    const isFri = wd===6;
+    const isToday = (jy===today.jy && jm===today.jm && d===today.jd);
+    const isSelected = (d===selJd);
+    const cls = ['jdp-day'];
+    if(isFri) cls.push('jdp-fri');
+    if(isToday) cls.push('jdp-today');
+    if(isSelected) cls.push('jdp-selected');
+    daysHtml += `<button type="button" class="${cls.join(' ')}" onclick="dpSelectDay(${jy},${jm},${d})">${toFaDigits(d)}</button>`;
+  }
+  const trailing = (7 - ((firstWd+len) % 7)) % 7;
+  for(let d=1; d<=trailing; d++){
+    daysHtml += `<div class="jdp-day jdp-faded">${toFaDigits(d)}</div>`;
+  }
+
+  let yearOptions = '';
+  for(let y=today.jy-5; y<=today.jy+5; y++){
+    yearOptions += `<option value="${y}" ${y===jy?'selected':''}>${toFaDigits(y)}</option>`;
+  }
+  const monthOptions = JALALI_MONTH_NAMES.map((name,idx)=>`<option value="${idx+1}" ${idx+1===jm?'selected':''}>${name}</option>`).join('');
+
+  el.innerHTML = `
+    <div class="jdp-today-row" onclick="dpGoToday()">
+      <span>📅</span><span>امروز: ${toFaDigits(today.jd)} ${JALALI_MONTH_NAMES[today.jm-1]} ${toFaDigits(today.jy)}</span>
+    </div>
+    <div class="jdp-nav">
+      <button type="button" class="jdp-arrow" onclick="dpNavMonth(-1)">‹</button>
+      <div class="jdp-nav-pill">
+        <select onchange="dpSetYear(this.value)">${yearOptions}</select>
+        <span class="jdp-divider"></span>
+        <select onchange="dpSetMonth(this.value)">${monthOptions}</select>
+      </div>
+      <button type="button" class="jdp-arrow" onclick="dpNavMonth(1)">›</button>
+    </div>
+    <div class="jdp-weekdays">${JALALI_WEEKDAYS.map((w,i)=>`<div class="${i===6?'jdp-fri':''}">${w}</div>`).join('')}</div>
+    <div class="jdp-grid">${daysHtml}</div>
+  `;
+}
+
 function toggleResolutionFields(){
   const isDiscount = document.getElementById('f_resolutionMethod').value === 'تخفیف روی پکیجی یا سفارش';
   const wrap = document.getElementById('f_packagei_wrap');
@@ -1522,7 +1758,7 @@ async function saveRow(){
     saving = false;
   }
 }
-function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); closeDatePicker(); }
 
 /* ---------------- settings ---------------- */
 function openSettings(){
