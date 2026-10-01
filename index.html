@@ -793,7 +793,7 @@ function jalCal(jy){
     jp = jm;
   }
   n = jy - jp;
-  leapJ += jDiv(n,33)*8 + jDiv(jMod(n+3,33),4);
+  leapJ += jDiv(n,33)*8 + jDiv(jMod(n,33)+3,4);
   if(jMod(jump,33)===4 && jump-n===4) leapJ += 1;
   const leapG = jDiv(gy,4) - jDiv((jDiv(gy,100)+1)*3,4) - 150;
   const march = 20 + leapJ - leapG;
@@ -846,12 +846,18 @@ function todayJalali(){
   const now = new Date();
   return d2j(g2d(now.getFullYear(), now.getMonth()+1, now.getDate()));
 }
+// هم فرمت جدید (۱۴۰۵/۰۷/۰۹ با ارقام فارسی) و هم فرمت قدیمی که قبلاً در شیت ذخیره می‌شد
+// (مثلاً 7/9/1405 با ارقام لاتین) را می‌خواند، تا سفارش‌های قدیمی هم درست در تقویم باز شوند.
 function parseDateField(str){
-  const m = String(str||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{3,4})$/);
-  if(!m) return null;
-  return { jm: parseInt(m[1],10), jd: parseInt(m[2],10), jy: parseInt(m[3],10) };
+  let s = String(str||'').trim().replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  let m = s.match(/^(\d{3,4})\/(\d{1,2})\/(\d{1,2})$/); // فرمت جدید: سال/ماه/روز
+  if(m) return { jy: parseInt(m[1],10), jm: parseInt(m[2],10), jd: parseInt(m[3],10) };
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{3,4})$/); // فرمت قدیمی: ماه/روز/سال
+  if(m) return { jm: parseInt(m[1],10), jd: parseInt(m[2],10), jy: parseInt(m[3],10) };
+  return null;
 }
-function formatDateField(jy,jm,jd){ return `${jm}/${jd}/${jy}`; }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function formatDateField(jy,jm,jd){ return toFaDigits(`${jy}/${pad2(jm)}/${pad2(jd)}`); }
 
 /* --------------- رابط کاربری تقویم (popup) --------------- */
 let dpState = { jy:0, jm:0, jd:0, targetInput:null };
