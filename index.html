@@ -596,7 +596,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <div class="field"><label>بررسی مدیریت</label><select id="f_mgmt"><option value="">— نامشخص —</option><option>عدم تایید</option><option>تایید</option></select></div>
           <div class="field"><label>توضیحات مدیریت</label><input id="f_mgmtNotes"></div>
           <div class="field"><label>وضعیت سفارش</label>
-            <select id="f_status"><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="بررسی مجدد - معلق">بررسی مجدد - معلق</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="عدم تایید آموزش">عدم تایید آموزش</option><option value="پرداخت شد">پرداخت شد</option><option value="تخفیف شد - کسر شد">تخفیف شد - کسر شد</option><option value="در انتظار کسر از حقوق">در انتظار کسر از حقوق</option></select>
+            <select id="f_status"><option value="تخفیف شد - کسر شد">تخفیف شد - کسر شد</option><option value="در انتظار کسر از حقوق">در انتظار کسر از حقوق</option><option value="در انتظار تایید آموزش">در انتظار تایید آموزش</option><option value="بررسی مجدد - معلق">بررسی مجدد - معلق</option><option value="عدم تایید آموزش">عدم تایید آموزش</option><option value="در انتظار تخفیف">در انتظار تخفیف</option><option value="پرداخت شد">پرداخت شد</option></select>
           </div>
           <div class="field"><label>کسر از حقوق</label>
             <select id="f_salaryDeduction"><option value="">— نامشخص —</option><option value="کسر شد ):">کسر شد ):</option><option value="کسر نشد (:">کسر نشد (:</option></select>
@@ -698,7 +698,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
 <script>
 const MONTHS_FA = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 // ترتیب اولویت وضعیت‌ها در نمایش و منطق پیش‌فرض؛ هر وضعیت جدید باید همین‌جا اضافه شود
-const STATUS_LIST = ['در انتظار تایید آموزش','بررسی مجدد - معلق','در انتظار تخفیف','عدم تایید آموزش','پرداخت شد','تخفیف شد - کسر شد','در انتظار کسر از حقوق'];
+const STATUS_LIST = ["تخفیف شد - کسر شد", "در انتظار کسر از حقوق", "در انتظار تایید آموزش", "بررسی مجدد - معلق", "عدم تایید آموزش", "در انتظار تخفیف", "پرداخت شد"];
 const STATUS_COLORS = {
   'پرداخت شد': '#3ab7ff',
   'تخفیف شد - کسر شد': '#22e6ae',
@@ -1359,7 +1359,7 @@ function applyFilters(){
     }
     return true;
   });
-  // اولویت نمایش بر اساس وضعیت: در انتظار تایید آموزش، بررسی مجدد - معلق، در انتظار تخفیف، عدم تایید آموزش، پرداخت شد، تخفیف شد - کسر شد، در انتظار کسر از حقوق
+  // اولویت نمایش بر اساس وضعیت: تخفیف شد - کسر شد، در انتظار کسر از حقوق، در انتظار تایید آموزش، بررسی مجدد - معلق، عدم تایید آموزش، در انتظار تخفیف، پرداخت شد
   // و در هر گروه، جدیدترین سفارش (آخرین سطر ثبت‌شده در شیت) اول نمایش داده شود
   filtered.sort((a,b)=>{
     let pa = STATUS_LIST.indexOf(normStatus(a.status)); if(pa<0) pa = 99;
