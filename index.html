@@ -699,6 +699,9 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
 const MONTHS_FA = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 // ترتیب اولویت وضعیت‌ها در نمایش و منطق پیش‌فرض؛ هر وضعیت جدید باید همین‌جا اضافه شود
 const STATUS_LIST = ["تخفیف شد - کسر شد", "در انتظار کسر از حقوق", "در انتظار تایید آموزش", "بررسی مجدد - معلق", "عدم تایید آموزش", "در انتظار تخفیف", "پرداخت شد"];
+// ترتیب نمایش ردیف‌های جدول اصلی سفارش‌ها؛ عمداً جدا از STATUS_LIST نگه داشته شده، چون
+// ترتیب گزینه‌های فیلتر/فرم با ترتیب نمایش سفارش‌ها در جدول لازم نیست یکی باشد.
+const STATUS_SORT_ORDER = ["در انتظار تایید آموزش", "بررسی مجدد - معلق", "در انتظار تخفیف", "در انتظار کسر از حقوق", "پرداخت شد", "عدم تایید آموزش", "تخفیف شد - کسر شد"];
 const STATUS_COLORS = {
   'پرداخت شد': '#3ab7ff',
   'تخفیف شد - کسر شد': '#22e6ae',
@@ -1101,14 +1104,29 @@ async function gsListUsers(){
 }
 
 /* ---------------- init ---------------- */
+// اولین درخواست به Apps Script گاهی به‌خاطر «بیدار شدن» سرویس (cold start) یک‌بار با
+// تأخیر یا خطای موقتی مواجه می‌شود، نه یک قطعی واقعی. چند بار با فاصله‌ی کوتاه دوباره
+// امتحان می‌کنیم تا این خطای لحظه‌ای و بی‌اهمیت دیگر به چشم کاربر نیاید.
+function delay(ms){ return new Promise(r=>setTimeout(r, ms)); }
+async function withRetry(fn, tries=3, delayMs=900){
+  let lastErr;
+  for(let i=0;i<tries;i++){
+    try{ return await fn(); }
+    catch(e){ lastErr = e; if(i<tries-1) await delay(delayMs); }
+  }
+  throw lastErr;
+}
 async function init(){
   const savedUsername = localGet(STORE_ME);
   if(savedUsername) document.getElementById('gateName').value = savedUsername;
   try{
-    window.__cfg = await gsGetConfig();
+    window.__cfg = await withRetry(gsGetConfig);
   }catch(e){
+    // این مقدار فقط لیست‌های اضافه‌ی «شرکت/نماینده» را پر می‌کند؛ ورود و کار با داشبورد
+    // بدون آن هم کاملاً ممکن است، پس اینجا دیگر کاربر را با پیام هشدار نمی‌ترسانیم —
+    // فقط در کنسول مرورگر ثبت می‌شود تا در صورت نیاز قابل بررسی باشد.
     window.__cfg = {};
-    document.getElementById('gateErr').textContent = 'اتصال اولیه به گوگل‌شیت برقرار نشد. صفحه را رفرش کنید.';
+    console.warn('گرفتن تنظیمات اولیه ناموفق بود (بدون تاثیر در ورود):', e);
   }
 }
 init();
@@ -1359,11 +1377,11 @@ function applyFilters(){
     }
     return true;
   });
-  // اولویت نمایش بر اساس وضعیت: تخفیف شد - کسر شد، در انتظار کسر از حقوق، در انتظار تایید آموزش، بررسی مجدد - معلق، عدم تایید آموزش، در انتظار تخفیف، پرداخت شد
+  // اولویت نمایش بر اساس وضعیت: در انتظار تایید آموزش، بررسی مجدد - معلق، در انتظار تخفیف، در انتظار کسر از حقوق، پرداخت شد، عدم تایید آموزش، تخفیف شد - کسر شد
   // و در هر گروه، جدیدترین سفارش (آخرین سطر ثبت‌شده در شیت) اول نمایش داده شود
   filtered.sort((a,b)=>{
-    let pa = STATUS_LIST.indexOf(normStatus(a.status)); if(pa<0) pa = 99;
-    let pb = STATUS_LIST.indexOf(normStatus(b.status)); if(pb<0) pb = 99;
+    let pa = STATUS_SORT_ORDER.indexOf(normStatus(a.status)); if(pa<0) pa = 99;
+    let pb = STATUS_SORT_ORDER.indexOf(normStatus(b.status)); if(pb<0) pb = 99;
     if(pa !== pb) return pa - pb;
     return b.id - a.id;
   });
