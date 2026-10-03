@@ -1565,7 +1565,10 @@ function renderTable(){
           <div class="row2">
             <div><h4>کارشناس آموزش</h4><div>${esc(o.training_specialist)||'—'}</div></div>
             <div><h4>وضعیت فیدبک</h4><div>${o.feedback_status==='Yes' ? `<span class="feedback-badge yes">✓</span>` : (o.feedback_status==='No' ? `<span class="feedback-badge no">✗</span>` : '—')}</div></div>
-            <div><h4>توضیحات تیم آموزش</h4><div>${esc(o.training_notes)||'—'}</div></div>
+          </div>
+          <h4 style="margin-top:12px;">توضیحات تیم آموزش</h4>
+          <div>${esc(o.training_notes)||'—'}</div>
+          <div class="row2" style="margin-top:12px;">
             <div><h4>بررسی مدیریت</h4><div>${esc(o.mgmt_review)||'—'}</div></div>
             <div><h4>توضیحات مدیریت</h4><div>${esc(o.mgmt_notes)||'—'}</div></div>
           </div>
