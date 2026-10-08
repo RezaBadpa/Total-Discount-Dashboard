@@ -1761,6 +1761,9 @@ async function saveRow(){
   if(currentUserRole === 'admin' && !_isInst && String(payload.salary_deduction||'').trim().indexOf('کسر شد') === 0){
     payload.deducted_amount = payload.amount;
   }
+  else if(currentUserRole === 'admin' && !_isInst && editingId){
+    payload.deducted_amount = 0;
+  }
 
   const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
   saving = true;
