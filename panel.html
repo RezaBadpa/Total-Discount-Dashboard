@@ -464,7 +464,14 @@ body:has(.modal-overlay.show){overflow:hidden;}
         <option value="30-">بالای ۳۰ میلیون ریال</option>
       </select>
       <select class="filter-sel" id="fResolutionMethod" onchange="applyFilters()"><option value="">همه روش‌های رفع مغایرت</option></select>
+      <select class="filter-sel" id="fFeedback" onchange="applyFilters()">
+        <option value="">وضعیت فیدبک (همه)</option>
+        <option value="Yes">✓ تایید شده</option>
+        <option value="No">✗ تایید نشده</option>
+      </select>
       <select class="filter-sel" id="fIssue" onchange="applyFilters()"><option value="">همه انواع مغایرت</option></select>
+      <input class="filter-sel" id="fDateFrom" readonly placeholder="از تاریخ" onclick="openDatePicker(this)" style="cursor:pointer;min-width:110px;">
+      <input class="filter-sel" id="fDateTo" readonly placeholder="تا تاریخ" onclick="openDatePicker(this)" style="cursor:pointer;min-width:110px;">
       <button class="clear-btn" onclick="clearFilters()">پاک‌کردن فیلترها</button>
     </div>
     <div class="result-count" id="resultCount"></div>
@@ -1369,6 +1376,9 @@ function clearFilters(){
   document.getElementById('fSalaryDeduction').value='';
   document.getElementById('fAmountRange').value='';
   document.getElementById('fResolutionMethod').value='';
+  document.getElementById('fFeedback').value='';
+  document.getElementById('fDateFrom').value='';
+  document.getElementById('fDateTo').value='';
   applyFilters();
 }
 function applyFilters(){
@@ -1382,6 +1392,9 @@ function applyFilters(){
   const fsd = document.getElementById('fSalaryDeduction').value;
   const far = document.getElementById('fAmountRange').value;
   const frm = document.getElementById('fResolutionMethod').value;
+  const ffb = document.getElementById('fFeedback').value;
+  const fdf = document.getElementById('fDateFrom').value;
+  const fdt = document.getElementById('fDateTo').value;
 
   filtered = orders.filter(o=>{
     if(fc && o.company !== fc) return false;
@@ -1392,6 +1405,14 @@ function applyFilters(){
     if(fsr && (o.seller_result||'').trim() !== fsr) return false;
     if(fsd && (o.salary_deduction||'').trim() !== fsd) return false;
     if(frm && (o.resolution_method||'').trim() !== frm) return false;
+    if(ffb && (o.feedback_status||'').trim() !== ffb) return false;
+    if(fdf || fdt){
+      const od = parseDateField(o.date);
+      if(!od) return false; // سفارش‌هایی که تاریخشان خوانا نیست، وقتی فیلتر بازه فعال است کنار گذاشته می‌شوند
+      const odn = j2d(od.jy, od.jm, od.jd);
+      if(fdf){ const fd = parseDateField(fdf); if(fd && odn < j2d(fd.jy,fd.jm,fd.jd)) return false; }
+      if(fdt){ const td = parseDateField(fdt); if(td && odn > j2d(td.jy,td.jm,td.jd)) return false; }
+    }
     if(far){
       const amt = Number(o.amount)||0;
       const amtM = amt/1e6; // میلیون ریال
@@ -1586,8 +1607,6 @@ function renderTable(){
             <div><h4>نحوه رفع مغایرت</h4><div>${esc(o.resolution_method)||'—'}</div></div>
             <div><h4>کانال ورودی</h4><div>${esc(o.seller_result)||'—'}</div></div>
             <div><h4>شماره سفارش الحاقیه - تیکت</h4><div class="mono">${esc(o.seller_ticket_no)||'—'}</div></div>
-            <div><h4>نوع پرداخت</h4><div>${esc(o.payment_type)||'—'}</div></div>
-            <div><h4>اقساط ماهانه (ریال)</h4><div>${[o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].filter(v=>v!==''&&v!=null&&Number(v)).map(v=>fmt(Number(v))).join(' · ')||'—'}</div></div>
           </div>
           ${o.resolution_method !== 'پرداخت کارت به کارت' ? `<h4 style="margin-top:12px;">پکیجی یا سفارش (جهت تخفیف)</h4><div class="mono">${esc(o.packagei)||'—'}</div>` : ''}
           <h4 style="margin-top:12px;">نوع مغایرت (شرح خلاصه)</h4>
