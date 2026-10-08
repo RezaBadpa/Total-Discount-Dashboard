@@ -792,14 +792,17 @@ async function init(){
   try{ window.__cfg = await withRetry(gsGetConfig); }
   catch(e){ window.__cfg = {}; console.warn(e); }
 
-  // نقش را دوباره از شیت می‌گیریم؛ اگر کاربر حذف شده باشد، خارج می‌شود
+  // نقش را دوباره از شیت می‌گیریم (اگر کاربر در لیست پیدا نشد، با اطلاعات ذخیره‌شده ادامه می‌دهیم)
   try{
     const users = await withRetry(gsListUsers);
-    const u = users.find(x=>x.username.toLowerCase()===SESSION.username.toLowerCase());
-    if(!u){ clearSession(); location.replace(LOGIN_URL); return; }
-    currentUserRole = u.role || 'member';
-    currentUser = u.displayName || u.username;
-    document.getElementById('whoAmI').textContent = currentUser;
+    const u = users.find(x=>String(x.username||'').trim().toLowerCase()===String(SESSION.username||'').trim().toLowerCase());
+    if(u){
+      currentUserRole = u.role || 'member';
+      currentUser = u.displayName || u.username;
+      document.getElementById('whoAmI').textContent = currentUser;
+    } else {
+      console.warn('کاربر در لیست پیدا نشد؛ با اطلاعات نشست ادامه می‌دهیم', SESSION.username, users);
+    }
   }catch(e){ console.warn('بررسی کاربر ناموفق بود، از اطلاعات ذخیره‌شده استفاده می‌شود', e); }
 
   await bootDashboard();
