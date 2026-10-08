@@ -888,6 +888,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
   <div class="modal small">
     <div class="modal-head"><h3>نحوه پرداخت</h3><button onclick="closeModal('instModalOverlay')">✕</button></div>
     <div class="modal-body">
+      <div id="instAmounts" style="border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:2;color:var(--muted);"></div>
       <div class="field"><label>نوع پرداخت</label>
         <select id="inst_type" onchange="updateInstPreview()">
           <option value="نقدی">نقدی</option>
@@ -909,7 +910,6 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         <div id="instPaidTotal" style="margin-top:8px;font-size:13px;color:var(--muted);"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
           <button type="button" class="btn primary" onclick="saveInstPaid()">ثبت پرداخت اقساط</button>
-          <button type="button" class="btn" onclick="removeInstallmentFromModal()">حذف یک قسط</button>
           <button type="button" class="btn" onclick="makeCashFromModal()">تبدیل به نقدی</button>
         </div>
         <div style="margin-top:8px;font-size:12px;color:var(--muted2);">جمع اقساط تیک‌خورده در ستون «مبلغ کسر شده» ثبت می‌شود.</div>
@@ -2030,7 +2030,16 @@ async function saveRow(){
 function closeModal(id){ document.getElementById(id).classList.remove('show'); closeDatePicker(); }
 /* ---------------- اقساط + تیک پرداخت (داخل پنجره $) ---------------- */
 function getInstValues(o){ return [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].map(v=>Number(v)||0); }
+function renderInstAmounts(){
+  const o = orders.find(x=>x.id===instId);
+  const box = document.getElementById('instAmounts');
+  if(!o){ box.innerHTML = ''; return; }
+  const amount = Number(o.amount)||0, ded = Number(o.deducted_amount)||0;
+  const b = v => `<b style="color:var(--text)">${fmt(v)}</b> ریال`;
+  box.innerHTML = `مبلغ مغایرت: ${b(amount)}<br>مبلغ کسر شده: ${b(ded)}<br>مبلغ باقی‌مانده جهت کسر: ${b(calcRemaining(amount, ded))}`;
+}
 function renderPaidSection(){
+  renderInstAmounts();
   const sec = document.getElementById('instPaidSection');
   const o = orders.find(x=>x.id===instId);
   if(!o || o.payment_type !== 'قسطی'){ sec.style.display = 'none'; return; }
@@ -2040,14 +2049,37 @@ function renderPaidSection(){
   if(document.getElementById('inst_type').value !== 'قسطی' || Number(document.getElementById('inst_count').value) !== n){
     sec.style.display = 'none'; return;
   }
-  const paid = o.paid_list || [];
+  // تیک‌ها فقط به‌صورت پشت‌سرهم معتبرند (قسط ۱، بعد ۲، ...)
+  const saved = o.paid_list || [];
+  let k = 0; while(saved.includes(k+1)) k++;
   sec.style.display = '';
   document.getElementById('instPaidList').innerHTML = vals.map((v,i)=> v>0 ? `
-    <label style="display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer;color:var(--text);">
-      <input type="checkbox" class="inst-paid-cb" data-idx="${i+1}" ${paid.includes(i+1)?'checked':''} onchange="updatePaidTotal()" style="width:18px;height:18px;accent-color:var(--green);">
+    <label class="inst-paid-row" style="display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--text);">
+      <input type="checkbox" class="inst-paid-cb" data-idx="${i+1}" ${i<k?'checked':''} onchange="onPaidToggle(this)" style="width:18px;height:18px;accent-color:var(--green);">
       <span>قسط ${toFaDigits(i+1)}: <b>${fmt(v)}</b> ریال</span>
-      <span style="margin-right:auto;font-size:12px;color:var(--muted2);">پرداخت شد</span>
+      <span class="inst-paid-status" style="margin-right:auto;font-size:12px;"></span>
     </label>` : '').join('');
+  syncPaidState();
+}
+function onPaidToggle(cb){
+  const cbs = [...document.querySelectorAll('.inst-paid-cb')];
+  const i = cbs.indexOf(cb);
+  // برداشتن تیک یک قسط، تیک اقساط بعدی را هم برمی‌دارد
+  if(!cb.checked) for(let j=i+1;j<cbs.length;j++) cbs[j].checked = false;
+  syncPaidState();
+}
+function syncPaidState(){
+  const cbs = [...document.querySelectorAll('.inst-paid-cb')];
+  cbs.forEach((c,i)=>{
+    const allowed = i === 0 || cbs[i-1].checked;   // قسط بعدی تا قسط قبلی تیک نخورده غیرفعال است
+    c.disabled = !allowed;
+    const row = c.closest('.inst-paid-row');
+    row.style.opacity = allowed ? '1' : '0.45';
+    row.style.cursor = allowed ? 'pointer' : 'not-allowed';
+    const st = row.querySelector('.inst-paid-status');
+    st.textContent = c.checked ? 'پرداخت شد ✓' : 'پرداخت نشده';
+    st.style.color = c.checked ? 'var(--green)' : 'var(--muted2)';
+  });
   updatePaidTotal();
 }
 function updatePaidTotal(){
@@ -2114,15 +2146,6 @@ async function paymentAction(action, payload, confirmMsg, logText, okMsg){
   }finally{
     saving = false;
   }
-}
-function removeInstallmentFromModal(){
-  const o = orders.find(x=>x.id===instId);
-  if(!o) return;
-  const n = getInstValues(o).filter(v=>v>0).length;
-  const msg = n > 2
-    ? 'یک قسط حذف شود؟ مبلغ مغایرت بین اقساط بقیه دوباره مساوی تقسیم می‌شود (تیک‌های پرداخت اقساط پاک می‌شود).'
-    : 'با حذف یک قسط فقط یک قسط می‌ماند و سفارش «نقدی» می‌شود. ادامه می‌دهید؟';
-  paymentAction('removeInstallment', {}, msg, 'یک قسط را حذف کرد', 'قسط حذف شد ✓');
 }
 function makeCashFromModal(){
   paymentAction('setPayment', { mode:'نقدی', count:0 },
