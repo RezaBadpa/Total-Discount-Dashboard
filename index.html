@@ -760,7 +760,7 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_errorType"><option value="">— نامشخص —</option><option value="بارمالی">بارمالی</option><option value="بدون بارمالی">بدون بارمالی</option></select>
         </div>
         <div class="field"><label>کاربر صدور</label><input id="f_issuerUser"></div>
-        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this);updateRemainingField()"></div>
+        <div class="field"><label>مبلغ مغایرت (ریال)</label><input id="f_amount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this)"></div>
         <div class="field">
           <label>نحوه رفع مغایرت</label>
           <select id="f_resolutionMethod" onchange="toggleResolutionFields()">
@@ -802,8 +802,6 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <div class="field"><label>کسر از حقوق</label>
             <select id="f_salaryDeduction"><option value="">— نامشخص —</option><option value="کسر شد ):">کسر شد ):</option><option value="کسر نشد (:">کسر نشد (:</option></select>
           </div>
-          <div class="field"><label>مبلغ کسر شده (ریال)</label><input id="f_deductedAmount" type="text" inputmode="numeric" placeholder="0" oninput="formatAmountInput(this);updateRemainingField()"></div>
-          <div class="field"><label>مبلغ باقی‌مانده جهت کسر (ریال)</label><input id="f_remainingAmount" disabled placeholder="—"></div>
         </div>
       </div>
     </div>
@@ -986,12 +984,7 @@ function calcRemaining(amount, deducted){
   const a = Number(amount)||0, d = Number(deducted)||0;
   return Math.max(a - d, 0);
 }
-function updateRemainingField(){
-  const num = id => Number(String(document.getElementById(id).value).replace(/[^\d]/g,''))||0;
-  const a = num('f_amount');
-  const r = calcRemaining(a, num('f_deductedAmount'));
-  document.getElementById('f_remainingAmount').value = a > 0 ? r.toLocaleString('en-US') + ' ریال' : '';
-}
+function updateRemainingField(){ /* مبالغ کسر شده/باقی‌مانده فقط داخل پنجره $ نمایش داده می‌شود */ }
 function normStatus(s){ return (s||'').trim(); }
 function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
 function esc(s){ const d=document.createElement('div'); d.textContent = s==null?'':String(s); return d.innerHTML; }
@@ -1229,7 +1222,7 @@ const FIELD_LABELS = {
   issue: 'نوع مغایرت', seller_result: 'کانال ورودی', seller_ticket_no: 'شماره سفارش الحاقیه - تیکت', issuance_result: 'توضیحات',
   resolution_method: 'نحوه رفع مغایرت', packagei: 'پکیجی/سفارش', amount: 'مبلغ', issuer_user: 'کاربر صدور', error_type: 'نوع خطا',
   training_specialist: 'کارشناس آموزش', training_notes: 'توضیحات تیم آموزش',
-  mgmt_review: 'بررسی مدیریت', mgmt_notes: 'توضیحات مدیریت', feedback_status: 'وضعیت فیدبک', salary_deduction: 'کسر از حقوق', deducted_amount: 'مبلغ کسر شده', status: 'وضعیت سفارش'
+  mgmt_review: 'بررسی مدیریت', mgmt_notes: 'توضیحات مدیریت', feedback_status: 'وضعیت فیدبک', salary_deduction: 'کسر از حقوق', status: 'وضعیت سفارش'
 };
 function buildDiffText(oldObj, payload){
   const parts = [];
@@ -1248,7 +1241,6 @@ function orderMatchesPayload(row, payload){
   // کل ذخیره‌سازی «ناموفق» گزارش شود.
   const fields = ['order_no','resolution_method','line','company','agent','issue','seller_result','seller_ticket_no','issuance_result','packagei','issuer_user','error_type','training_specialist','training_notes','mgmt_review','mgmt_notes','feedback_status','salary_deduction'];
   const toNum = v => Number(String(v==null?'':v).replace(/[^\d.\-]/g,''))||0;
-  if(toNum(row.deducted_amount) !== toNum(payload.deducted_amount)) return false;
   for(const f of fields){
     if(String(row[f]||'').trim() !== String(payload[f]||'').trim()) return false;
   }
@@ -1883,14 +1875,12 @@ function openAddModal(){
   document.getElementById('f_status').value = 'در انتظار تایید آموزش';
   document.getElementById('f_mgmt').value = '';
   document.getElementById('f_salaryDeduction').value = '';
-  document.getElementById('f_deductedAmount').value = '';
-  document.getElementById('f_remainingAmount').value = '';
   document.getElementById('editOnlyFields').style.display = 'none';
   ALL_EDIT_FIELD_IDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.disabled = false; });
   document.getElementById('memberEditNote').style.display = 'none';
   document.getElementById('editModalOverlay').classList.add('show');
 }
-const ALL_EDIT_FIELD_IDS = ['f_order_no','f_resolutionMethod','f_packagei','f_line','f_company','f_agent','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_sellerTicketNo','f_issue','f_issuance_result','f_status','f_trainingSpecialist','f_feedbackYes','f_feedbackNo','f_trainingNotes','f_mgmt','f_mgmtNotes','f_salaryDeduction','f_deductedAmount'];
+const ALL_EDIT_FIELD_IDS = ['f_order_no','f_resolutionMethod','f_packagei','f_line','f_company','f_agent','f_date','f_amount','f_errorType','f_issuerUser','f_seller_result','f_sellerTicketNo','f_issue','f_issuance_result','f_status','f_trainingSpecialist','f_feedbackYes','f_feedbackNo','f_trainingNotes','f_mgmt','f_mgmtNotes','f_salaryDeduction'];
 const MEMBER_EDITABLE_FIELD_IDS = ['f_order_no','f_resolutionMethod','f_packagei','f_issue','f_issuance_result'];
 function applyRoleFieldRestrictions(){
   const isAdmin = currentUserRole === 'admin';
@@ -1926,8 +1916,6 @@ function openEditModal(id){
   document.getElementById('f_initialUser').value = findInitialAddUser(o.order_no) || '----';
   document.getElementById('f_mgmtNotes').value = o.mgmt_notes||'';
   document.getElementById('f_salaryDeduction').value = o.salary_deduction||'';
-  document.getElementById('f_deductedAmount').value = o.deducted_amount ? Number(o.deducted_amount).toLocaleString('en-US') : '';
-  updateRemainingField();
   document.getElementById('f_issue').value = o.issue||'';
   document.getElementById('f_seller_result').value = o.seller_result||'';
   document.getElementById('f_sellerTicketNo').value = o.seller_ticket_no||'';
@@ -1969,7 +1957,6 @@ async function saveRow(){
     training_specialist: document.getElementById('f_trainingSpecialist').value,
     mgmt_notes: document.getElementById('f_mgmtNotes').value.trim(),
     salary_deduction: document.getElementById('f_salaryDeduction').value,
-    deducted_amount: Number(document.getElementById('f_deductedAmount').value.replace(/,/g,''))||0,
     status: document.getElementById('f_status').value,
   };
   const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
