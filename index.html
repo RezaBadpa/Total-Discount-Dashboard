@@ -1254,7 +1254,7 @@ function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return
 function localSet(key, val){ try{ localStorage.setItem(key, val); }catch(e){} }
 
 /* ---------------- Google Sheet backend (تنها منبع داده) ---------------- */
-function normalizeRow(r){ return { ...r, id: Number(r.id), amount: Number(r.amount)||0, payment_type: (String(r.payment_type||'').trim() === 'قسطی') ? 'قسطی' : 'نقدی', paid_list: (String(r.paid_insts||'').match(/[1-5]/g)||[]).map(Number) }; }
+function normalizeRow(r){ return { ...r, id: Number(r.id), amount: Number(r.amount)||0, payment_type: (String(r.payment_type||'').trim() === 'قسطی') ? 'قسطی' : 'نقدی', paid_list: [1,2,3,4,5].filter(i=>/^(yes|true|y|بله)$/i.test(String(r['paid_'+i]||'').trim())) }; }
 async function gsListRows(){
   const url = GS_URL + '?action=list&token=' + encodeURIComponent(GS_TOKEN);
   const res = await fetch(url, { method:'GET' });
