@@ -1556,8 +1556,8 @@ function renderTable(){
       <td>${esc(o.company)}</td>
       <td>${esc(o.issuer_user)}</td>
       <td class="amount-cell">${fmt(o.amount)}</td>
-      <td class="amount-cell">${Number(o.deducted_amount) ? fmt(Number(o.deducted_amount)) : '—'}</td>
-      <td class="amount-cell">${calcRemaining(o.amount, o.deducted_amount) ? fmt(calcRemaining(o.amount, o.deducted_amount)) : '—'}</td>
+      <td class="amount-cell">${fmt(Number(o.deducted_amount)||0)}</td>
+      <td class="amount-cell">${fmt(calcRemaining(o.amount, o.deducted_amount))}</td>
       <td>${esc(o.salary_deduction)||'—'}</td>
       <td><span class="pill ${pillClass}">${esc(st)}</span></td>
       <td>
