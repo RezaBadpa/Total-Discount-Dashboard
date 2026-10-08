@@ -440,7 +440,7 @@ tbody tr.expanded-row td{border-bottom:none;}
   background:var(--card);border:1px solid var(--border);border-radius:18px;width:min(640px,100%);
   max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);
 }
-.modal.small{width:min(380px,100%);}
+.modal.small{width:min(420px,100%);max-height:92vh;overflow-y:auto;}
 .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border);}
 .modal-head h3{margin:0;font-size:16px;}
 .modal-head button{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;}
@@ -773,14 +773,6 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_issue"></select>
         </div>
         <div class="field full"><label>توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
-        <div id="instEditSection" class="field full" style="display:none;border:1px solid var(--border);border-radius:12px;padding:14px;">
-          <label style="color:var(--text);font-weight:600;">اقساط این سفارش</label>
-          <div id="instEditList" style="font-size:13px;line-height:2;color:var(--muted);"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-            <button type="button" class="btn" onclick="removeInstallmentFromEdit()">حذف یک قسط</button>
-            <button type="button" class="btn" onclick="makeCashFromEdit()">تبدیل به نقدی</button>
-          </div>
-        </div>
         <div id="editOnlyFields" class="form-grid" style="grid-column:1/-1;padding:0;">
           <div class="field full" style="border-top:1px dashed var(--border);padding-top:14px;margin-top:2px;">
             <label style="color:var(--muted2);">فیلدهای زیر فقط هنگام ویرایش یک سفارش موجود قابل‌تغییرند</label>
@@ -911,6 +903,17 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
         </select>
       </div>
       <div id="inst_preview" style="margin-top:14px;font-size:13px;line-height:2;color:var(--muted);"></div>
+      <div id="instPaidSection" style="display:none;margin-top:14px;border:1px solid var(--border);border-radius:12px;padding:12px 14px;">
+        <div style="font-weight:600;color:var(--text);margin-bottom:6px;">اقساط این سفارش</div>
+        <div id="instPaidList" style="font-size:13px;"></div>
+        <div id="instPaidTotal" style="margin-top:8px;font-size:13px;color:var(--muted);"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <button type="button" class="btn primary" onclick="saveInstPaid()">ثبت پرداخت اقساط</button>
+          <button type="button" class="btn" onclick="removeInstallmentFromModal()">حذف یک قسط</button>
+          <button type="button" class="btn" onclick="makeCashFromModal()">تبدیل به نقدی</button>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--muted2);">جمع اقساط تیک‌خورده در ستون «مبلغ کسر شده» ثبت می‌شود.</div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn ghost" onclick="closeModal('instModalOverlay')">انصراف</button>
@@ -1259,7 +1262,7 @@ function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return
 function localSet(key, val){ try{ localStorage.setItem(key, val); }catch(e){} }
 
 /* ---------------- Google Sheet backend (تنها منبع داده) ---------------- */
-function normalizeRow(r){ return { ...r, id: Number(r.id), amount: Number(r.amount)||0, payment_type: (String(r.payment_type||'').trim() === 'قسطی') ? 'قسطی' : 'نقدی' }; }
+function normalizeRow(r){ return { ...r, id: Number(r.id), amount: Number(r.amount)||0, payment_type: (String(r.payment_type||'').trim() === 'قسطی') ? 'قسطی' : 'نقدی', paid_list: (String(r.paid_insts||'').match(/[1-5]/g)||[]).map(Number) }; }
 async function gsListRows(){
   const url = GS_URL + '?action=list&token=' + encodeURIComponent(GS_TOKEN);
   const res = await fetch(url, { method:'GET' });
@@ -1882,7 +1885,6 @@ function openAddModal(){
   document.getElementById('f_salaryDeduction').value = '';
   document.getElementById('f_deductedAmount').value = '';
   document.getElementById('f_remainingAmount').value = '';
-  document.getElementById('instEditSection').style.display = 'none';
   document.getElementById('editOnlyFields').style.display = 'none';
   ALL_EDIT_FIELD_IDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.disabled = false; });
   document.getElementById('memberEditNote').style.display = 'none';
@@ -1931,7 +1933,6 @@ function openEditModal(id){
   document.getElementById('f_sellerTicketNo').value = o.seller_ticket_no||'';
   document.getElementById('editOnlyFields').style.display = 'grid';
   document.getElementById('f_issuance_result').value = o.issuance_result||'';
-  renderInstEditSection(o);
   applyRoleFieldRestrictions();
   document.getElementById('editModalOverlay').classList.add('show');
 }
@@ -2027,34 +2028,85 @@ async function saveRow(){
   }
 }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); closeDatePicker(); }
-/* ---------------- نقدی / قسطی (داخل فرم ویرایش) ---------------- */
-function renderInstEditSection(o){
-  const sec = document.getElementById('instEditSection');
-  const isInst = !!o && o.payment_type === 'قسطی' && currentUserRole === 'admin';
-  sec.style.display = isInst ? '' : 'none';
-  if(!isInst) return;
-  const vals = [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].filter(v=>Number(v));
-  document.getElementById('instEditList').innerHTML = vals
-    .map((v,i)=>`قسط ${toFaDigits(i+1)}: <b style="color:var(--text)">${fmt(Number(v))}</b> ریال`)
-    .join('<br>');
+/* ---------------- اقساط + تیک پرداخت (داخل پنجره $) ---------------- */
+function getInstValues(o){ return [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].map(v=>Number(v)||0); }
+function renderPaidSection(){
+  const sec = document.getElementById('instPaidSection');
+  const o = orders.find(x=>x.id===instId);
+  if(!o || o.payment_type !== 'قسطی'){ sec.style.display = 'none'; return; }
+  const vals = getInstValues(o);
+  const n = vals.filter(v=>v>0).length;
+  // اگر کاربر در همین پنجره نوع/تعداد را عوض کرده و هنوز ذخیره نکرده، لیست اقساط ذخیره‌شده را مخفی می‌کنیم
+  if(document.getElementById('inst_type').value !== 'قسطی' || Number(document.getElementById('inst_count').value) !== n){
+    sec.style.display = 'none'; return;
+  }
+  const paid = o.paid_list || [];
+  sec.style.display = '';
+  document.getElementById('instPaidList').innerHTML = vals.map((v,i)=> v>0 ? `
+    <label style="display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer;color:var(--text);">
+      <input type="checkbox" class="inst-paid-cb" data-idx="${i+1}" ${paid.includes(i+1)?'checked':''} onchange="updatePaidTotal()" style="width:18px;height:18px;accent-color:var(--green);">
+      <span>قسط ${toFaDigits(i+1)}: <b>${fmt(v)}</b> ریال</span>
+      <span style="margin-right:auto;font-size:12px;color:var(--muted2);">پرداخت شد</span>
+    </label>` : '').join('');
+  updatePaidTotal();
 }
-async function paymentActionFromEdit(action, payload, confirmMsg, logText, okMsg){
+function updatePaidTotal(){
+  const o = orders.find(x=>x.id===instId);
+  if(!o) return;
+  const vals = getInstValues(o);
+  let sum = 0;
+  document.querySelectorAll('.inst-paid-cb:checked').forEach(c=>{ sum += vals[Number(c.dataset.idx)-1] || 0; });
+  document.getElementById('instPaidTotal').innerHTML = `جمع اقساط پرداخت‌شده: <b style="color:var(--text)">${fmt(sum)}</b> ریال`;
+}
+async function saveInstPaid(){
+  if(saving) return;
+  if(currentUserRole !== 'admin'){ showToast('فقط ادمین می‌تواند پرداخت اقساط را ثبت کند', true); return; }
+  const o = orders.find(x=>x.id===instId);
+  if(!o) return;
+  const paid = [...document.querySelectorAll('.inst-paid-cb:checked')].map(c=>Number(c.dataset.idx));
+  saving = true;
+  try{
+    const res = await gsCall('setInstPaid', { requester: currentUsername, id: instId, expectedOrderNo: o.order_no, paid });
+    if(res.row){
+      const idx = orders.findIndex(x=>x.id===instId);
+      if(idx>-1) orders[idx] = normalizeRow(res.row);
+    } else {
+      await loadOrders(true);
+    }
+    pushLog('edit', `${currentUser} پرداخت اقساط سفارش ${o.order_no} را ثبت کرد — ${paid.length ? 'اقساط پرداخت‌شده: ' + paid.map(toFaDigits).join('، ') : 'هیچ قسطی پرداخت‌شده نیست'}`);
+    applyFilters();
+    renderPaidSection();
+    if(res.failedFields && res.failedFields.length) showToast('⚠️ بعضی ستون‌ها روی شیت ذخیره نشدند', true);
+    else showToast('پرداخت اقساط ثبت شد ✓');
+  }catch(e){
+    showToast('ذخیره ناموفق بود: ' + e.message, true);
+  }finally{
+    saving = false;
+  }
+}
+async function paymentAction(action, payload, confirmMsg, logText, okMsg){
   if(saving) return;
   if(currentUserRole !== 'admin'){ showToast('فقط ادمین می‌تواند نحوه کسر از حقوق را تغییر دهد', true); return; }
-  const o = orders.find(x=>x.id===editingId);
+  const o = orders.find(x=>x.id===instId);
   if(!o) return;
   if(!confirm(confirmMsg)) return;
   saving = true;
   try{
-    const res = await gsCall(action, { requester: currentUsername, id: editingId, expectedOrderNo: o.order_no, ...payload });
+    const res = await gsCall(action, { requester: currentUsername, id: instId, expectedOrderNo: o.order_no, ...payload });
     if(res.row){
-      const idx = orders.findIndex(x=>x.id===editingId);
+      const idx = orders.findIndex(x=>x.id===instId);
       if(idx>-1) orders[idx] = normalizeRow(res.row);
     } else {
       await loadOrders(true);
     }
     pushLog('edit', `${currentUser} ${logText} (سفارش ${o.order_no})`);
-    renderInstEditSection(orders.find(x=>x.id===editingId));
+    const cur = orders.find(x=>x.id===instId);
+    if(cur){
+      document.getElementById('inst_type').value = cur.payment_type === 'قسطی' ? 'قسطی' : 'نقدی';
+      const filled = getInstValues(cur).filter(v=>v>0).length;
+      document.getElementById('inst_count').value = [2,3,4,5].includes(filled) ? String(filled) : '2';
+    }
+    updateInstPreview();
     applyFilters();
     showToast(okMsg);
   }catch(e){
@@ -2063,18 +2115,18 @@ async function paymentActionFromEdit(action, payload, confirmMsg, logText, okMsg
     saving = false;
   }
 }
-function removeInstallmentFromEdit(){
-  const o = orders.find(x=>x.id===editingId);
+function removeInstallmentFromModal(){
+  const o = orders.find(x=>x.id===instId);
   if(!o) return;
-  const n = [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].filter(v=>Number(v)).length;
+  const n = getInstValues(o).filter(v=>v>0).length;
   const msg = n > 2
-    ? 'یک قسط حذف شود؟ مبلغ مغایرت بین اقساط بقیه دوباره مساوی تقسیم می‌شود.'
+    ? 'یک قسط حذف شود؟ مبلغ مغایرت بین اقساط بقیه دوباره مساوی تقسیم می‌شود (تیک‌های پرداخت اقساط پاک می‌شود).'
     : 'با حذف یک قسط فقط یک قسط می‌ماند و سفارش «نقدی» می‌شود. ادامه می‌دهید؟';
-  paymentActionFromEdit('removeInstallment', {}, msg, 'یک قسط را حذف کرد', 'قسط حذف شد ✓');
+  paymentAction('removeInstallment', {}, msg, 'یک قسط را حذف کرد', 'قسط حذف شد ✓');
 }
-function makeCashFromEdit(){
-  paymentActionFromEdit('setPayment', { mode:'نقدی', count:0 },
-    'سفارش نقدی شود؟ همه‌ی اقساط پاک می‌شوند.',
+function makeCashFromModal(){
+  paymentAction('setPayment', { mode:'نقدی', count:0 },
+    'سفارش نقدی شود؟ همه‌ی اقساط (و تیک‌های پرداخت) پاک می‌شوند.',
     'سفارش را از قسطی به «نقدی» تغییر داد', 'سفارش نقدی شد ✓');
 }
 /* ---------------- نقدی / قسطی ---------------- */
@@ -2097,12 +2149,13 @@ function updateInstPreview(){
   document.getElementById('inst_count_wrap').style.display = isInst ? '' : 'none';
   const rem = Number(o.amount)||0; // اقساط روی کل مبلغ مغایرت تقسیم می‌شوند
   const box = document.getElementById('inst_preview');
-  if(!isInst){ box.innerHTML = `مبلغ مغایرت: <b style="color:var(--text)">${fmt(rem)}</b> ریال — پرداخت یک‌جا (نقدی)`; return; }
+  if(!isInst){ box.innerHTML = `مبلغ مغایرت: <b style="color:var(--text)">${fmt(rem)}</b> ریال — پرداخت یک‌جا (نقدی)`; renderPaidSection(); return; }
   const n = Number(document.getElementById('inst_count').value);
   const base = Math.floor(rem/n);
   const lines = [];
   for(let i=1;i<=n;i++) lines.push(`قسط ${i}: <b style="color:var(--text)">${fmt(i<n ? base : rem-base*(n-1))}</b> ریال`);
   box.innerHTML = `مبلغ مغایرت: <b style="color:var(--text)">${fmt(rem)}</b> ریال<br>${lines.join('<br>')}`;
+  renderPaidSection();
 }
 async function saveInstallment(){
   if(saving) return;
