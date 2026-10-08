@@ -1259,7 +1259,7 @@ function localGet(key){ try{ return localStorage.getItem(key); }catch(e){ return
 function localSet(key, val){ try{ localStorage.setItem(key, val); }catch(e){} }
 
 /* ---------------- Google Sheet backend (تنها منبع داده) ---------------- */
-function normalizeRow(r){ return { ...r, id: Number(r.id), amount: Number(r.amount)||0 }; }
+function normalizeRow(r){ return { ...r, id: Number(r.id), amount: Number(r.amount)||0, payment_type: (String(r.payment_type||'').trim() === 'قسطی') ? 'قسطی' : 'نقدی' }; }
 async function gsListRows(){
   const url = GS_URL + '?action=list&token=' + encodeURIComponent(GS_TOKEN);
   const res = await fetch(url, { method:'GET' });
@@ -1775,7 +1775,7 @@ function renderTable(){
           <button class="det-btn" id="descBtn-${o.id}" title="جزئیات" onclick="toggleDesc(${o.id})">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-        <button class="inst-btn ${o.payment_type==='قسطی' ? 'active' : ''}" data-tip="${o.payment_type==='قسطی' ? 'قسطی' : 'کسر از حقوق'}" onclick="openInstModal(${o.id})">$</button>
+        ${currentUserRole==='admin' ? `<button class="inst-btn ${o.payment_type==='قسطی' ? 'active' : ''}" data-tip="${o.payment_type==='قسطی' ? 'قسطی' : 'کسر از حقوق'}" onclick="openInstModal(${o.id})">$</button>` : ''}
         </div>
       </td>
       <td>
@@ -2030,7 +2030,7 @@ function closeModal(id){ document.getElementById(id).classList.remove('show'); c
 /* ---------------- نقدی / قسطی (داخل فرم ویرایش) ---------------- */
 function renderInstEditSection(o){
   const sec = document.getElementById('instEditSection');
-  const isInst = !!o && o.payment_type === 'قسطی';
+  const isInst = !!o && o.payment_type === 'قسطی' && currentUserRole === 'admin';
   sec.style.display = isInst ? '' : 'none';
   if(!isInst) return;
   const vals = [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].filter(v=>Number(v));
@@ -2040,12 +2040,13 @@ function renderInstEditSection(o){
 }
 async function paymentActionFromEdit(action, payload, confirmMsg, logText, okMsg){
   if(saving) return;
+  if(currentUserRole !== 'admin'){ showToast('فقط ادمین می‌تواند نحوه کسر از حقوق را تغییر دهد', true); return; }
   const o = orders.find(x=>x.id===editingId);
   if(!o) return;
   if(!confirm(confirmMsg)) return;
   saving = true;
   try{
-    const res = await gsCall(action, { id: editingId, expectedOrderNo: o.order_no, ...payload });
+    const res = await gsCall(action, { requester: currentUsername, id: editingId, expectedOrderNo: o.order_no, ...payload });
     if(res.row){
       const idx = orders.findIndex(x=>x.id===editingId);
       if(idx>-1) orders[idx] = normalizeRow(res.row);
@@ -2067,7 +2068,7 @@ function removeInstallmentFromEdit(){
   if(!o) return;
   const n = [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].filter(v=>Number(v)).length;
   const msg = n > 2
-    ? 'یک قسط حذف شود؟ مبلغ باقی‌مانده بین اقساط بقیه دوباره مساوی تقسیم می‌شود.'
+    ? 'یک قسط حذف شود؟ مبلغ مغایرت بین اقساط بقیه دوباره مساوی تقسیم می‌شود.'
     : 'با حذف یک قسط فقط یک قسط می‌ماند و سفارش «نقدی» می‌شود. ادامه می‌دهید؟';
   paymentActionFromEdit('removeInstallment', {}, msg, 'یک قسط را حذف کرد', 'قسط حذف شد ✓');
 }
@@ -2079,6 +2080,7 @@ function makeCashFromEdit(){
 /* ---------------- نقدی / قسطی ---------------- */
 let instId = null;
 function openInstModal(id){
+  if(currentUserRole !== 'admin'){ showToast('فقط ادمین می‌تواند نحوه کسر از حقوق را تغییر دهد', true); return; }
   const o = orders.find(x=>x.id===id);
   if(!o) return;
   instId = id;
@@ -2093,27 +2095,28 @@ function updateInstPreview(){
   if(!o) return;
   const isInst = document.getElementById('inst_type').value === 'قسطی';
   document.getElementById('inst_count_wrap').style.display = isInst ? '' : 'none';
-  const rem = calcRemaining(o.amount, o.deducted_amount);
+  const rem = Number(o.amount)||0; // اقساط روی کل مبلغ مغایرت تقسیم می‌شوند
   const box = document.getElementById('inst_preview');
-  if(!isInst){ box.innerHTML = `مبلغ باقی‌مانده: <b style="color:var(--text)">${fmt(rem)}</b> ریال — پرداخت یک‌جا (نقدی)`; return; }
+  if(!isInst){ box.innerHTML = `مبلغ مغایرت: <b style="color:var(--text)">${fmt(rem)}</b> ریال — پرداخت یک‌جا (نقدی)`; return; }
   const n = Number(document.getElementById('inst_count').value);
   const base = Math.floor(rem/n);
   const lines = [];
   for(let i=1;i<=n;i++) lines.push(`قسط ${i}: <b style="color:var(--text)">${fmt(i<n ? base : rem-base*(n-1))}</b> ریال`);
-  box.innerHTML = `مبلغ باقی‌مانده: <b style="color:var(--text)">${fmt(rem)}</b> ریال<br>${lines.join('<br>')}`;
+  box.innerHTML = `مبلغ مغایرت: <b style="color:var(--text)">${fmt(rem)}</b> ریال<br>${lines.join('<br>')}`;
 }
 async function saveInstallment(){
   if(saving) return;
+  if(currentUserRole !== 'admin'){ showToast('فقط ادمین می‌تواند نحوه کسر از حقوق را تغییر دهد', true); return; }
   const o = orders.find(x=>x.id===instId);
   if(!o) return;
   const mode = document.getElementById('inst_type').value;
   const count = Number(document.getElementById('inst_count').value);
-  if(mode==='قسطی' && calcRemaining(o.amount, o.deducted_amount) <= 0){
-    showToast('مبلغ باقی‌مانده صفر است و قسطی کردن ممکن نیست', true); return;
+  if(mode==='قسطی' && (Number(o.amount)||0) <= 0){
+    showToast('مبلغ مغایرت صفر است و قسطی کردن ممکن نیست', true); return;
   }
   saving = true;
   try{
-    const res = await gsCall('setPayment', { id: instId, expectedOrderNo: o.order_no, mode, count });
+    const res = await gsCall('setPayment', { requester: currentUsername, id: instId, expectedOrderNo: o.order_no, mode, count });
     if(res.row){
       const idx = orders.findIndex(x=>x.id===instId);
       if(idx>-1) orders[idx] = normalizeRow(res.row);
