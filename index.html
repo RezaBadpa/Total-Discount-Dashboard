@@ -773,7 +773,14 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
           <select id="f_issue"></select>
         </div>
         <div class="field full"><label>توضیحات و تشریح با جزئیات مغایرت (شرح کامل)</label><textarea id="f_issuance_result"></textarea></div>
-
+        <div id="instEditSection" class="field full" style="display:none;border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <label style="color:var(--text);font-weight:600;">اقساط این سفارش</label>
+          <div id="instEditList" style="font-size:13px;line-height:2;color:var(--muted);"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button type="button" class="btn" onclick="removeInstallmentFromEdit()">حذف یک قسط</button>
+            <button type="button" class="btn" onclick="makeCashFromEdit()">تبدیل به نقدی</button>
+          </div>
+        </div>
         <div id="editOnlyFields" class="form-grid" style="grid-column:1/-1;padding:0;">
           <div class="field full" style="border-top:1px dashed var(--border);padding-top:14px;margin-top:2px;">
             <label style="color:var(--muted2);">فیلدهای زیر فقط هنگام ویرایش یک سفارش موجود قابل‌تغییرند</label>
@@ -920,7 +927,6 @@ footer.note{color:var(--muted2);font-size:11.5px;text-align:center;margin-top:26
   <input type="hidden" name="token" id="hpf_token">
   <input type="hidden" name="payload" id="hpf_payload">
 </form>
-
 
 <script>
 const MONTHS_FA = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
@@ -1876,6 +1882,7 @@ function openAddModal(){
   document.getElementById('f_salaryDeduction').value = '';
   document.getElementById('f_deductedAmount').value = '';
   document.getElementById('f_remainingAmount').value = '';
+  document.getElementById('instEditSection').style.display = 'none';
   document.getElementById('editOnlyFields').style.display = 'none';
   ALL_EDIT_FIELD_IDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.disabled = false; });
   document.getElementById('memberEditNote').style.display = 'none';
@@ -1924,6 +1931,7 @@ function openEditModal(id){
   document.getElementById('f_sellerTicketNo').value = o.seller_ticket_no||'';
   document.getElementById('editOnlyFields').style.display = 'grid';
   document.getElementById('f_issuance_result').value = o.issuance_result||'';
+  renderInstEditSection(o);
   applyRoleFieldRestrictions();
   document.getElementById('editModalOverlay').classList.add('show');
 }
@@ -2019,6 +2027,55 @@ async function saveRow(){
   }
 }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); closeDatePicker(); }
+/* ---------------- نقدی / قسطی (داخل فرم ویرایش) ---------------- */
+function renderInstEditSection(o){
+  const sec = document.getElementById('instEditSection');
+  const isInst = !!o && o.payment_type === 'قسطی';
+  sec.style.display = isInst ? '' : 'none';
+  if(!isInst) return;
+  const vals = [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].filter(v=>Number(v));
+  document.getElementById('instEditList').innerHTML = vals
+    .map((v,i)=>`قسط ${toFaDigits(i+1)}: <b style="color:var(--text)">${fmt(Number(v))}</b> ریال`)
+    .join('<br>');
+}
+async function paymentActionFromEdit(action, payload, confirmMsg, logText, okMsg){
+  if(saving) return;
+  const o = orders.find(x=>x.id===editingId);
+  if(!o) return;
+  if(!confirm(confirmMsg)) return;
+  saving = true;
+  try{
+    const res = await gsCall(action, { id: editingId, expectedOrderNo: o.order_no, ...payload });
+    if(res.row){
+      const idx = orders.findIndex(x=>x.id===editingId);
+      if(idx>-1) orders[idx] = normalizeRow(res.row);
+    } else {
+      await loadOrders(true);
+    }
+    pushLog('edit', `${currentUser} ${logText} (سفارش ${o.order_no})`);
+    renderInstEditSection(orders.find(x=>x.id===editingId));
+    applyFilters();
+    showToast(okMsg);
+  }catch(e){
+    showToast('عملیات ناموفق بود: ' + e.message, true);
+  }finally{
+    saving = false;
+  }
+}
+function removeInstallmentFromEdit(){
+  const o = orders.find(x=>x.id===editingId);
+  if(!o) return;
+  const n = [o.inst_1,o.inst_2,o.inst_3,o.inst_4,o.inst_5].filter(v=>Number(v)).length;
+  const msg = n > 2
+    ? 'یک قسط حذف شود؟ مبلغ باقی‌مانده بین اقساط بقیه دوباره مساوی تقسیم می‌شود.'
+    : 'با حذف یک قسط فقط یک قسط می‌ماند و سفارش «نقدی» می‌شود. ادامه می‌دهید؟';
+  paymentActionFromEdit('removeInstallment', {}, msg, 'یک قسط را حذف کرد', 'قسط حذف شد ✓');
+}
+function makeCashFromEdit(){
+  paymentActionFromEdit('setPayment', { mode:'نقدی', count:0 },
+    'سفارش نقدی شود؟ همه‌ی اقساط پاک می‌شوند.',
+    'سفارش را از قسطی به «نقدی» تغییر داد', 'سفارش نقدی شد ✓');
+}
 /* ---------------- نقدی / قسطی ---------------- */
 let instId = null;
 function openInstModal(id){
