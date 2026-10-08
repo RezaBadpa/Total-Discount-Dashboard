@@ -128,6 +128,17 @@ body{font-family:'Vazirmatn',sans-serif;color:#e7edf3;-webkit-font-smoothing:ant
   #gate .g-blob,#gate .g-dots,.gate-card::after,.g-logo::before,.g-logo::after,.gate-card h2{animation:none;}
   .gate-card,.gate-card > *{animation:none !important;}
 }
+/* ---------- شخصیت به‌جای قفل ---------- */
+.g-logo{width:84px;height:150px;margin:-6px auto 8px;background:none;border-radius:0;box-shadow:none;}
+.g-logo::before,.g-logo::after{display:none;}
+.g-logo img{height:100%;width:auto;display:block;margin:0 auto;
+  filter:drop-shadow(0 14px 18px rgba(25,160,255,.35));
+  animation:mFloat 3.2s ease-in-out infinite;}
+@keyframes mFloat{50%{transform:translateY(-7px) rotate(1.5deg);}}
+.g-logo.unlocked{box-shadow:none;}
+.g-logo.unlocked img{animation:mHop .5s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 14px 22px rgba(34,230,174,.6));}
+@keyframes mHop{40%{transform:translateY(-16px) scale(1.08);}}
 </style>
 </head>
 <body>
@@ -144,7 +155,7 @@ body{font-family:'Vazirmatn',sans-serif;color:#e7edf3;-webkit-font-smoothing:ant
   <div class="g-stage" id="gStage">
     <div class="gate-card" id="gCard">
       <div class="g-logo" id="gLogo">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="shackle" d="M8 11V8a4 4 0 0 1 8 0v3"/><rect x="4" y="11" width="16" height="10" rx="3"/><circle cx="12" cy="16" r="1.1" fill="#fff" stroke="none"/></svg>
+        <img src="mascot.png" alt="">
       </div>
       <div class="g-greet" id="gGreet"></div>
       <h2>داشبورد مغایرت سفارشات ازکی سلر</h2>
