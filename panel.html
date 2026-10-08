@@ -1754,6 +1754,14 @@ async function saveRow(){
     salary_deduction: document.getElementById('f_salaryDeduction').value,
     status: document.getElementById('f_status').value,
   };
+
+  // نقدی + «کسر شد»: کل مبلغ مغایرت = مبلغ کسر شده
+  const _cur = editingId ? orders.find(o=>o.id===editingId) : null;
+  const _isInst = !!(_cur && _cur.payment_type === 'قسطی');
+  if(currentUserRole === 'admin' && !_isInst && String(payload.salary_deduction||'').trim().indexOf('کسر شد') === 0){
+    payload.deducted_amount = payload.amount;
+  }
+
   const beforeEdit = editingId ? orders.find(o=>o.id===editingId) : null;
   saving = true;
   try{
@@ -1770,6 +1778,11 @@ async function saveRow(){
         const idx = orders.findIndex(o=>o.id===editingId);
         if(idx>-1) orders[idx] = normalizeRow(res.row);
         failed = res.failedFields || [];
+        if(idx>-1) orders[idx] = normalizeRow(res.row);
+        failed = res.failedFields || [];
+        if(payload.deducted_amount !== undefined && (Number(res.row.deducted_amount)||0) !== payload.deducted_amount){
+          showToast('⚠️ مبلغ کسر شده روی شیت ثبت نشد — عنوان ستون را در شیت چک کنید', true);
+        }
       } else {
         // حالت پشتیبان (فرم مخفی): با چند بار بارگذاری مجدد بررسی می‌کنیم تغییر روی شیت اعمال شده
         const applied = await reloadUntil(()=>{
