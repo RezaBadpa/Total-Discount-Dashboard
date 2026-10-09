@@ -354,6 +354,26 @@ button.jdp-day:hover{background:#0f161e;border-color:var(--border);}
 .log-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0;}
 .log-item.del .log-dot{background:var(--red);}
 .log-item.edit .log-dot{background:var(--blue);}
+.log-item.cat-pay .log-dot{background:var(--green);}
+.log-item.cat-users .log-dot{background:var(--orange);}
+.log-item.cat-login .log-dot{background:var(--muted2);}
+.log-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.log-chip{
+  background:var(--card2);border:1px solid var(--border);color:var(--muted);
+  padding:6px 12px;border-radius:999px;font-family:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap;
+}
+.log-chip b{font-weight:600;color:var(--muted2);margin-right:4px;}
+.log-chip:hover{color:var(--text);border-color:var(--accent);}
+.log-chip.active{background:var(--accent);border-color:var(--accent);color:#04121a;}
+.log-chip.active b{color:#04121a;}
+.log-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.log-tools select,.log-tools input{
+  background:#0a0f15;border:1px solid var(--border);color:var(--text);
+  padding:9px 12px;border-radius:10px;font-family:inherit;font-size:13px;outline:none;
+}
+.log-tools input{flex:1 1 160px;min-width:140px;}
+.log-tools select:focus,.log-tools input:focus{border-color:var(--accent);}
+.log-count{font-size:12px;color:var(--muted2);margin-top:6px;}
 .log-item .log-text{font-size:13px;line-height:1.8;}
 .log-item .log-meta{font-size:11.5px;color:var(--muted2);margin-top:2px;}
 .empty-log{color:var(--muted2);text-align:center;padding:30px 0;font-size:13px;}
@@ -654,6 +674,7 @@ body:has(.modal-overlay.show){overflow:hidden;}
 <div class="modal-overlay" id="logModalOverlay">
   <div class="modal">
     <div class="modal-head"><h3>لاگ تغییرات تیم</h3><button onclick="closeModal('logModalOverlay')">✕</button></div>
+    <div id="logToolbar" style="padding:14px 22px 0;"></div>
     <div class="modal-body" id="logBody"></div>
   </div>
 </div>
@@ -1321,23 +1342,85 @@ function timeAgo(ts){
   const d = new Date(ts);
   return d.toLocaleString('fa-IR');
 }
-function openLog(){
+/* دسته‌بندی لاگ: ورود / افزودن سفارش / ویرایش / پرداخت و اقساط / حذف / کاربران */
+const LOG_CATS = [
+  { id:'login', label:'ورود' },
+  { id:'add',   label:'افزودن سفارش' },
+  { id:'edit',  label:'ویرایش' },
+  { id:'pay',   label:'پرداخت و اقساط' },
+  { id:'del',   label:'حذف' },
+  { id:'users', label:'کاربران' },
+];
+let logFilter = { cat:'', user:'', q:'' };
+function logCategory(l){
+  const t = String(l.text||''), a = String(l.action||'');
+  if(a === 'login') return 'login';
+  if(t.includes('کاربر جدید') || (a === 'del' && t.includes('کاربر «'))) return 'users';
+  if(a === 'add') return 'add';
+  if(a === 'del') return 'del';
+  if(/پرداخت اقساط سفارش|نحوه پرداخت سفارش|به «نقدی» تغییر داد|یک قسط را حذف/.test(t)) return 'pay';
+  return 'edit';
+}
+function logFiltered(){
+  const q = logFilter.q.trim().toLowerCase();
+  return auditLog.filter(l=>{
+    if(logFilter.cat && logCategory(l) !== logFilter.cat) return false;
+    if(logFilter.user && String(l.user||'') !== logFilter.user) return false;
+    if(q && !(String(l.text||'') + ' ' + String(l.user||'')).toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+function setLogFilter(key, val){
+  logFilter[key] = val;
+  if(key === 'cat') document.querySelectorAll('#logToolbar .log-chip').forEach(c=> c.classList.toggle('active', c.dataset.cat === logFilter.cat));
+  renderLogList();
+}
+function renderLogList(){
   const body = document.getElementById('logBody');
-  if(!auditLog.length){
+  const list = logFiltered();
+  const total = auditLog.length;
+  if(!total){
     body.innerHTML = '<div class="empty-log">هنوز تغییری ثبت نشده است.</div>';
-  } else {
-    body.innerHTML = auditLog.map(l=>{
-      const when = (l.date && l.time) ? `${l.date} - ${l.time}` : timeAgo(l.ts);
-      return `
-      <div class="log-item ${l.action}">
+    return;
+  }
+  let html = `<div class="log-count">${list.length.toLocaleString('en-US')} مورد از ${total.toLocaleString('en-US')} مورد</div>`;
+  if(!list.length) html += '<div class="empty-log">موردی با این فیلتر پیدا نشد.</div>';
+  html += list.map(l=>{
+    const when = (l.date && l.time) ? `${l.date} - ${l.time}` : timeAgo(l.ts);
+    return `
+      <div class="log-item ${esc(l.action)} cat-${logCategory(l)}">
         <div class="log-dot"></div>
         <div>
           <div class="log-text">${esc(l.text)}</div>
           <div class="log-meta">${esc(l.user)} · ${esc(when)}</div>
         </div>
       </div>`;
-    }).join('');
+  }).join('');
+  body.innerHTML = html;
+}
+function openLog(){
+  const tb = document.getElementById('logToolbar');
+  if(!auditLog.length){
+    tb.innerHTML = '';
+  } else {
+    const counts = {};
+    auditLog.forEach(l=>{ const c = logCategory(l); counts[c] = (counts[c]||0) + 1; });
+    const users = [...new Set(auditLog.map(l=>String(l.user||'')).filter(Boolean))];
+    if(logFilter.user && !users.includes(logFilter.user)) logFilter.user = '';
+    tb.innerHTML = `
+      <div class="log-chips">
+        <button type="button" class="log-chip ${logFilter.cat===''?'active':''}" data-cat="" onclick="setLogFilter('cat','')">همه<b>${auditLog.length.toLocaleString('en-US')}</b></button>
+        ${LOG_CATS.map(c=>`<button type="button" class="log-chip ${logFilter.cat===c.id?'active':''}" data-cat="${c.id}" onclick="setLogFilter('cat','${c.id}')">${c.label}<b>${(counts[c.id]||0).toLocaleString('en-US')}</b></button>`).join('')}
+      </div>
+      <div class="log-tools">
+        <select onchange="setLogFilter('user',this.value)">
+          <option value="">همه کاربران</option>
+          ${users.map(u=>`<option value="${esc(u).replace(/"/g,'&quot;')}" ${logFilter.user===u?'selected':''}>${esc(u)}</option>`).join('')}
+        </select>
+        <input placeholder="جستجو در لاگ (شماره سفارش، متن...)" value="${esc(logFilter.q).replace(/"/g,'&quot;')}" oninput="setLogFilter('q',this.value)">
+      </div>`;
   }
+  renderLogList();
   document.getElementById('logModalOverlay').classList.add('show');
 }
 
