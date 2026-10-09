@@ -978,7 +978,14 @@ function parseDateField(str){
     return { jy: y, jm: mo, jd: d };
   }
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{3,4})$/); // فرمت قدیمی: ماه/روز/سال
-  if(m) return { jm: parseInt(m[1],10), jd: parseInt(m[2],10), jy: parseInt(m[3],10) };
+  if(m){
+    const a = parseInt(m[1],10), b = parseInt(m[2],10), y = parseInt(m[3],10);
+    if(y >= 1700){ // میلادی ماه/روز/سال (مثل 10/9/2026)
+      const j = d2j(g2d(y, a, b));
+      return { jy: j.jy, jm: j.jm, jd: j.jd };
+    }
+    return { jm: a, jd: b, jy: y };
+  }
   return null;
 }
 function pad2(n){ return String(n).padStart(2,'0'); }
