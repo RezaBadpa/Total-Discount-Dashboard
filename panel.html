@@ -474,17 +474,17 @@ body:has(.modal-overlay.show){overflow:hidden;}
     </div>
     <div class="search-wrap">
       <div class="date-range">
-        <div class="date-range-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> بازه تاریخ <span>(ستون تاریخ)</span></div>
+        <div class="date-range-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> بازه تاریخ روز <span>(ستون E)</span></div>
         <div class="date-field">
-          <label for="fDateFrom">از تاریخ</label>
-          <input id="fDateFrom" readonly placeholder="انتخاب تاریخ" onclick="openDatePicker(this)">
+          <label for="fDateFrom">از تاریخ روز</label>
+          <input id="fDateFrom" readonly placeholder="انتخاب تاریخ روز" onclick="openDatePicker(this)">
         </div>
         <div class="date-range-sep">←</div>
         <div class="date-field">
-          <label for="fDateTo">تا تاریخ</label>
-          <input id="fDateTo" readonly placeholder="انتخاب تاریخ" onclick="openDatePicker(this)">
+          <label for="fDateTo">تا تاریخ روز</label>
+          <input id="fDateTo" readonly placeholder="انتخاب تاریخ روز" onclick="openDatePicker(this)">
         </div>
-        <button type="button" class="date-clear" onclick="clearDateRange()" title="پاک‌کردن بازه تاریخ">✕ پاک‌کردن</button>
+        <button type="button" class="date-clear" onclick="clearDateRange()" title="پاک‌کردن بازه تاریخ روز">✕ پاک‌کردن</button>
       </div>
       <select class="filter-sel" id="fCompany" onchange="applyFilters()"><option value="">همه شرکت‌های بیمه</option></select>
       <select class="filter-sel" id="fLine" onchange="applyFilters()"><option value="">همه رشته‌ها</option></select>
@@ -586,7 +586,7 @@ body:has(.modal-overlay.show){overflow:hidden;}
           <select id="f_agent"></select>
         </div>
         <div class="field"><label>کاربر ثبت اولیه</label><input id="f_initialUser" disabled placeholder="----"></div>
-        <div class="field"><label>تاریخ</label><input id="f_date" readonly placeholder="انتخاب تاریخ" onclick="openDatePicker(this)"></div>
+        <div class="field"><label>تاریخ روز</label><input id="f_date" readonly placeholder="انتخاب تاریخ روز" onclick="openDatePicker(this)"></div>
         <div class="field"><label>کانال ورودی</label>
           <select id="f_seller_result">
             <option value="سفارش الحاقیه (ایجنت)">سفارش الحاقیه (ایجنت)</option>
@@ -1121,7 +1121,7 @@ function formatAmountInput(el){
   el.value = Number(raw).toLocaleString('en-US');
 }
 const FIELD_LABELS = {
-  order_no: 'شماره سفارش', line: 'رشته بیمه', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ',
+  order_no: 'شماره سفارش', line: 'رشته بیمه', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ روز',
   issue: 'نوع مغایرت', seller_result: 'کانال ورودی', seller_ticket_no: 'شماره سفارش الحاقیه - تیکت', issuance_result: 'توضیحات',
   resolution_method: 'نحوه رفع مغایرت', packagei: 'پکیجی/سفارش', amount: 'مبلغ', issuer_user: 'کاربر صدور', error_type: 'نوع خطا',
   training_specialist: 'کارشناس آموزش', training_notes: 'توضیحات تیم آموزش',
@@ -1666,7 +1666,7 @@ function renderTable(){
           <div class="row2">
             <div><h4>رشته بیمه</h4><div>${esc(normLine(o.line))||'—'}</div></div>
             <div><h4>نوع خطا</h4><div>${esc(o.error_type)||'—'}</div></div>
-            <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
+            <div><h4>تاریخ روز</h4><div class="mono">${esc(o.date)||'—'}</div></div>
             <div><h4>نماینده بیمه</h4><div>${esc(o.agent)||'—'}</div></div>
             <div><h4>کاربر ثبت اولیه</h4><div>${esc(findInitialAddUser(o.order_no)) || '—'}</div></div>
             <div><h4>نحوه رفع مغایرت</h4><div>${esc(o.resolution_method)||'—'}</div></div>
@@ -2261,7 +2261,7 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','نحوه رفع مغایرت','پکیجی یا سفارش (جهت تخفیف)','مبلغ مغایرت (ریال)','کاربر صدور','نوع خطا','کارشناس آموزش','وضعیت فیدبک','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ روز','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','نحوه رفع مغایرت','پکیجی یا سفارش (جهت تخفیف)','مبلغ مغایرت (ریال)','کاربر صدور','نوع خطا','کارشناس آموزش','وضعیت فیدبک','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
   const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.resolution_method,o.packagei,o.amount,o.issuer_user,o.error_type,o.training_specialist,o.feedback_status,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,o.deducted_amount,(calcRemaining(o.amount,o.deducted_amount)||''),normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
