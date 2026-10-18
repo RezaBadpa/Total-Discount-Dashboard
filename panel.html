@@ -154,28 +154,6 @@ select.filter-sel{
   padding:11px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap;
 }
 .clear-btn:hover{color:var(--text);border-color:var(--pink);}
-/* بازه تاریخ (بالای همه‌ی فیلترها) */
-.date-range{
-  flex:1 1 100%;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;
-  background:transparent;border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:2px;
-}
-.date-range-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--text);align-self:center;}
-.date-range-title svg{color:var(--accent);}
-.date-range-title span{font-size:11.5px;font-weight:400;color:var(--muted2);}
-.date-field{display:flex;flex-direction:column;gap:4px;min-width:150px;}
-.date-field label{font-size:11.5px;color:var(--muted);}
-.date-field input{
-  background:#0a0f15;border:1px solid var(--border);color:var(--text);
-  padding:10px 12px;border-radius:10px;font-family:inherit;font-size:13px;outline:none;cursor:pointer;text-align:center;
-  transition:border-color .15s;
-}
-.date-field input:hover,.date-field input:focus{border-color:var(--accent);}
-.date-range-sep{color:var(--muted2);font-size:18px;padding-bottom:8px;}
-.date-clear{
-  background:var(--card2);border:1px solid var(--border);color:var(--muted);
-  padding:10px 14px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:12.5px;
-}
-.date-clear:hover{color:var(--text);border-color:var(--pink);}
 .result-count{color:var(--muted2);font-size:12px;margin-top:10px;}
 
 /* ---------- Table toolbar ---------- */
@@ -343,6 +321,19 @@ button.jdp-day:hover{background:#0f161e;border-color:var(--border);}
 .jdp-day.jdp-fri{color:var(--pink);}
 .jdp-day.jdp-today{border-color:var(--accent);}
 .jdp-day.jdp-selected{background:var(--accent);color:#03111f;font-weight:700;border-color:var(--accent);}
+.date-range-pill{
+  display:flex;align-items:center;gap:6px;
+  background:#0a0f15;border:1px solid var(--border);border-radius:10px;
+  padding:0 10px;transition:.15s;
+}
+.date-range-pill:hover,.date-range-pill:focus-within{border-color:var(--accent);}
+.date-range-pill svg{flex-shrink:0;color:var(--muted2);}
+.date-range-pill .dr-input{
+  width:78px;background:transparent;border:none;color:var(--text);
+  font-family:inherit;font-size:12.5px;outline:none;cursor:pointer;padding:11px 0;text-align:center;
+}
+.date-range-pill .dr-input::placeholder{color:var(--muted2);}
+.date-range-pill .dr-sep{color:var(--muted2);font-size:11.5px;flex-shrink:0;}
 .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--border);}
 .warn-icon{width:52px;height:52px;border-radius:14px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
 .confirm-text{text-align:center;color:var(--muted);font-size:13.5px;line-height:1.9;margin-bottom:4px;}
@@ -354,26 +345,6 @@ button.jdp-day:hover{background:#0f161e;border-color:var(--border);}
 .log-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0;}
 .log-item.del .log-dot{background:var(--red);}
 .log-item.edit .log-dot{background:var(--blue);}
-.log-item.cat-pay .log-dot{background:var(--green);}
-.log-item.cat-users .log-dot{background:var(--orange);}
-.log-item.cat-login .log-dot{background:var(--muted2);}
-.log-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
-.log-chip{
-  background:var(--card2);border:1px solid var(--border);color:var(--muted);
-  padding:6px 12px;border-radius:999px;font-family:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap;
-}
-.log-chip b{font-weight:600;color:var(--muted2);margin-right:4px;}
-.log-chip:hover{color:var(--text);border-color:var(--accent);}
-.log-chip.active{background:var(--accent);border-color:var(--accent);color:#04121a;}
-.log-chip.active b{color:#04121a;}
-.log-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
-.log-tools select,.log-tools input{
-  background:#0a0f15;border:1px solid var(--border);color:var(--text);
-  padding:9px 12px;border-radius:10px;font-family:inherit;font-size:13px;outline:none;
-}
-.log-tools input{flex:1 1 160px;min-width:140px;}
-.log-tools select:focus,.log-tools input:focus{border-color:var(--accent);}
-.log-count{font-size:12px;color:var(--muted2);margin-top:6px;}
 .log-item .log-text{font-size:13px;line-height:1.8;}
 .log-item .log-meta{font-size:11.5px;color:var(--muted2);margin-top:2px;}
 .empty-log{color:var(--muted2);text-align:center;padding:30px 0;font-size:13px;}
@@ -452,6 +423,9 @@ body:has(.modal-overlay.show){overflow:hidden;}
       <button class="icon-btn" title="لاگ تغییرات" onclick="openLog()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
+      <button class="icon-btn" title="نمودارها" onclick="openCharts()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="7" y="11" width="3" height="8" rx="1" fill="currentColor" stroke="none"/><rect x="12.5" y="7" width="3" height="12" rx="1" fill="currentColor" stroke="none"/><rect x="18" y="13" width="3" height="6" rx="1" fill="currentColor" stroke="none"/></svg>
+      </button>
       <button class="icon-btn" title="به‌روزرسانی" onclick="refreshData(true)">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8M21 3v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16M3 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -460,30 +434,7 @@ body:has(.modal-overlay.show){overflow:hidden;}
 
   <!-- ================= STAT CARDS ================= -->
   <div class="stats-grid" id="statsGrid"></div>
-
-  <!-- ================= COMPOSITION BAR ================= -->
-  <div class="panel">
-    <div class="panel-head">
-      <div>
-        <div class="panel-title"><span class="pic">📊</span> ترکیب وضعیت سفارش‌ها بر اساس مبلغ</div>
-      </div>
-    </div>
-    <div class="comp-total">مجموع: <b id="compTotal">-</b> ریال</div>
-    <div class="comp-bar" id="compBar"></div>
-    <div class="comp-legend" id="compLegend"></div>
-  </div>
-
-  <!-- ================= CHARTS ================= -->
-  <div class="charts-grid">
-    <div class="panel">
-      <div class="panel-title"><span class="pic">🏢</span> سهم شرکت‌های بیمه</div>
-      <div class="chart-box tall"><canvas id="chartCompany"></canvas></div>
-    </div>
-    <div class="panel">
-      <div class="panel-title"><span class="pic">💰</span> مقایسه مبالغ تخفیف‌شده و کسر شده (ریال)</div>
-      <div class="chart-box tall"><canvas id="chartDeductVsDiscount"></canvas></div>
-    </div>
-  </div>
+  <div class="stats-grid" id="lineStatsGrid" style="margin-top:-6px;"></div>
 
   <!-- ================= SEARCH ================= -->
   <div class="panel">
@@ -493,19 +444,6 @@ body:has(.modal-overlay.show){overflow:hidden;}
       <input id="searchBox" placeholder="جستجو در شماره سفارش، شرح، پکیجی..." oninput="applyFilters()">
     </div>
     <div class="search-wrap">
-      <div class="date-range">
-        <div class="date-range-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> بازه تاریخ روز <span>(ستون E)</span></div>
-        <div class="date-field">
-          <label for="fDateFrom">از تاریخ روز</label>
-          <input id="fDateFrom" readonly placeholder="انتخاب تاریخ روز" onclick="openDatePicker(this)">
-        </div>
-        <div class="date-range-sep">←</div>
-        <div class="date-field">
-          <label for="fDateTo">تا تاریخ روز</label>
-          <input id="fDateTo" readonly placeholder="انتخاب تاریخ روز" onclick="openDatePicker(this)">
-        </div>
-        <button type="button" class="date-clear" onclick="clearDateRange()" title="پاک‌کردن بازه تاریخ روز">✕ پاک‌کردن</button>
-      </div>
       <select class="filter-sel" id="fCompany" onchange="applyFilters()"><option value="">همه شرکت‌های بیمه</option></select>
       <select class="filter-sel" id="fLine" onchange="applyFilters()"><option value="">همه رشته‌ها</option></select>
       <select class="filter-sel" id="fStatus" onchange="applyFilters()"><option value="">همه وضعیت‌ها</option></select>
@@ -523,8 +461,14 @@ body:has(.modal-overlay.show){overflow:hidden;}
         <option value="">وضعیت فیدبک (همه)</option>
         <option value="Yes">✓ تایید شده</option>
         <option value="No">✗ تایید نشده</option>
-        <option value="__none__">؟ نامشخص (بدون فیدبک)</option>
+        <option value="none">— نامشخص —</option>
       </select>
+      <div class="date-range-pill" title="فیلتر بر اساس تاریخ سفارش">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <input class="dr-input" id="fDateFrom" readonly placeholder="از تاریخ" onclick="openDatePicker(this)">
+        <span class="dr-sep">تا</span>
+        <input class="dr-input" id="fDateTo" readonly placeholder="تا تاریخ" onclick="openDatePicker(this)">
+      </div>
       <select class="filter-sel" id="fIssue" onchange="applyFilters()"><option value="">همه انواع مغایرت</option></select>
       <button class="clear-btn" onclick="clearFilters()">پاک‌کردن فیلترها</button>
     </div>
@@ -597,6 +541,7 @@ body:has(.modal-overlay.show){overflow:hidden;}
             <option value="خودرویی - ثالث">خودرویی - ثالث</option>
             <option value="خودرویی - بدنه">خودرویی - بدنه</option>
             <option value="غیرخودرویی">غیرخودرویی</option>
+            <option value="تیم الحاقیه">تیم الحاقیه</option>
           </select>
         </div>
         <div class="field"><label>شرکت بیمه</label>
@@ -606,7 +551,7 @@ body:has(.modal-overlay.show){overflow:hidden;}
           <select id="f_agent"></select>
         </div>
         <div class="field"><label>کاربر ثبت اولیه</label><input id="f_initialUser" disabled placeholder="----"></div>
-        <div class="field"><label>تاریخ روز</label><input id="f_date" readonly placeholder="انتخاب تاریخ روز" onclick="openDatePicker(this)"></div>
+        <div class="field"><label>تاریخ</label><input id="f_date" readonly placeholder="انتخاب تاریخ" onclick="openDatePicker(this)"></div>
         <div class="field"><label>کانال ورودی</label>
           <select id="f_seller_result">
             <option value="سفارش الحاقیه (ایجنت)">سفارش الحاقیه (ایجنت)</option>
@@ -671,10 +616,37 @@ body:has(.modal-overlay.show){overflow:hidden;}
   </div>
 </div>
 
+<div class="modal-overlay" id="chartsModalOverlay">
+  <div class="modal" style="width:min(980px,100%);">
+    <div class="modal-head"><h3>نمودارها</h3><button onclick="closeModal('chartsModalOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title"><span class="pic">📊</span> ترکیب وضعیت سفارش‌ها بر اساس مبلغ</div>
+          </div>
+        </div>
+        <div class="comp-total">مجموع: <b id="compTotal">-</b> ریال</div>
+        <div class="comp-bar" id="compBar"></div>
+        <div class="comp-legend" id="compLegend"></div>
+      </div>
+      <div class="charts-grid">
+        <div class="panel">
+          <div class="panel-title"><span class="pic">🏢</span> سهم شرکت‌های بیمه</div>
+          <div class="chart-box tall"><canvas id="chartCompany"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><span class="pic">💰</span> مقایسه مبالغ تخفیف‌شده و کسر شده (ریال)</div>
+          <div class="chart-box tall"><canvas id="chartDeductVsDiscount"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="logModalOverlay">
   <div class="modal">
     <div class="modal-head"><h3>لاگ تغییرات تیم</h3><button onclick="closeModal('logModalOverlay')">✕</button></div>
-    <div id="logToolbar" style="padding:14px 22px 0;"></div>
     <div class="modal-body" id="logBody"></div>
   </div>
 </div>
@@ -983,30 +955,11 @@ function todayJalali(){
 // هم فرمت جدید (۱۴۰۵/۰۷/۰۹ با ارقام فارسی) و هم فرمت قدیمی که قبلاً در شیت ذخیره می‌شد
 // (مثلاً 7/9/1405 با ارقام لاتین) را می‌خواند، تا سفارش‌های قدیمی هم درست در تقویم باز شوند.
 function parseDateField(str){
-  // مقدار ستون «تاریخ» (E): ارقام فارسی/عربی/لاتین و جداکننده‌های / - . پشتیبانی می‌شود
-  let s = String(str||'').trim()
-    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
-    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
-    .replace(/[\-\.،]/g, '/')
-    .replace(/\s+/g, '');
-  let m = s.match(/^(\d{3,4})\/(\d{1,2})\/(\d{1,2})$/); // سال/ماه/روز
-  if(m){
-    const y = parseInt(m[1],10), mo = parseInt(m[2],10), d = parseInt(m[3],10);
-    if(y >= 1700){ // تاریخ میلادی → شمسی
-      const j = d2j(g2d(y, mo, d));
-      return { jy: j.jy, jm: j.jm, jd: j.jd };
-    }
-    return { jy: y, jm: mo, jd: d };
-  }
+  let s = String(str||'').trim().replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  let m = s.match(/^(\d{3,4})\/(\d{1,2})\/(\d{1,2})$/); // فرمت جدید: سال/ماه/روز
+  if(m) return { jy: parseInt(m[1],10), jm: parseInt(m[2],10), jd: parseInt(m[3],10) };
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{3,4})$/); // فرمت قدیمی: ماه/روز/سال
-  if(m){
-    const a = parseInt(m[1],10), b = parseInt(m[2],10), y = parseInt(m[3],10);
-    if(y >= 1700){ // میلادی ماه/روز/سال (مثل 10/9/2026)
-      const j = d2j(g2d(y, a, b));
-      return { jy: j.jy, jm: j.jm, jd: j.jd };
-    }
-    return { jm: a, jd: b, jy: y };
-  }
+  if(m) return { jm: parseInt(m[1],10), jd: parseInt(m[2],10), jy: parseInt(m[3],10) };
   return null;
 }
 function pad2(n){ return String(n).padStart(2,'0'); }
@@ -1071,10 +1024,7 @@ function dpSelectDay(jy,jm,jd){
   if(dpState.targetInput){
     dpState.targetInput.value = formatDateField(jy,jm,jd);
   }
-  const tid = dpState.targetInput ? dpState.targetInput.id : '';
   closeDatePicker();
-  // انتخاب تاریخ در بازه‌ی جستجو، بلافاصله فیلتر را اعمال می‌کند
-  if(tid === 'fDateFrom' || tid === 'fDateTo') applyFilters();
 }
 function renderDatePicker(){
   const el = document.getElementById('jalaliDatePicker');
@@ -1142,7 +1092,7 @@ function formatAmountInput(el){
   el.value = Number(raw).toLocaleString('en-US');
 }
 const FIELD_LABELS = {
-  order_no: 'شماره سفارش', line: 'رشته بیمه', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ روز',
+  order_no: 'شماره سفارش', line: 'رشته بیمه', company: 'شرکت بیمه', agent: 'نماینده', date: 'تاریخ',
   issue: 'نوع مغایرت', seller_result: 'کانال ورودی', seller_ticket_no: 'شماره سفارش الحاقیه - تیکت', issuance_result: 'توضیحات',
   resolution_method: 'نحوه رفع مغایرت', packagei: 'پکیجی/سفارش', amount: 'مبلغ', issuer_user: 'کاربر صدور', error_type: 'نوع خطا',
   training_specialist: 'کارشناس آموزش', training_notes: 'توضیحات تیم آموزش',
@@ -1342,85 +1292,29 @@ function timeAgo(ts){
   const d = new Date(ts);
   return d.toLocaleString('fa-IR');
 }
-/* دسته‌بندی لاگ: ورود / افزودن سفارش / ویرایش / پرداخت و اقساط / حذف / کاربران */
-const LOG_CATS = [
-  { id:'login', label:'ورود' },
-  { id:'add',   label:'افزودن سفارش' },
-  { id:'edit',  label:'ویرایش' },
-  { id:'pay',   label:'پرداخت و اقساط' },
-  { id:'del',   label:'حذف' },
-  { id:'users', label:'کاربران' },
-];
-let logFilter = { cat:'', user:'', q:'' };
-function logCategory(l){
-  const t = String(l.text||''), a = String(l.action||'');
-  if(a === 'login') return 'login';
-  if(t.includes('کاربر جدید') || (a === 'del' && t.includes('کاربر «'))) return 'users';
-  if(a === 'add') return 'add';
-  if(a === 'del') return 'del';
-  if(/پرداخت اقساط سفارش|نحوه پرداخت سفارش|به «نقدی» تغییر داد|یک قسط را حذف/.test(t)) return 'pay';
-  return 'edit';
+function openCharts(){
+  document.getElementById('chartsModalOverlay').classList.add('show');
+  // چارت‌ها وقتی مودال هنوز display:none است ممکن است با اندازه‌ی صفر رسم شوند؛
+  // بعد از یک فریم (وقتی مودال واقعاً دیده می‌شود) دوباره رسمشان می‌کنیم تا درست دربیایند.
+  requestAnimationFrame(()=>{ renderComposition(); renderCharts(); });
 }
-function logFiltered(){
-  const q = logFilter.q.trim().toLowerCase();
-  return auditLog.filter(l=>{
-    if(logFilter.cat && logCategory(l) !== logFilter.cat) return false;
-    if(logFilter.user && String(l.user||'') !== logFilter.user) return false;
-    if(q && !(String(l.text||'') + ' ' + String(l.user||'')).toLowerCase().includes(q)) return false;
-    return true;
-  });
-}
-function setLogFilter(key, val){
-  logFilter[key] = val;
-  if(key === 'cat') document.querySelectorAll('#logToolbar .log-chip').forEach(c=> c.classList.toggle('active', c.dataset.cat === logFilter.cat));
-  renderLogList();
-}
-function renderLogList(){
+function openLog(){
   const body = document.getElementById('logBody');
-  const list = logFiltered();
-  const total = auditLog.length;
-  if(!total){
+  if(!auditLog.length){
     body.innerHTML = '<div class="empty-log">هنوز تغییری ثبت نشده است.</div>';
-    return;
-  }
-  let html = `<div class="log-count">${list.length.toLocaleString('en-US')} مورد از ${total.toLocaleString('en-US')} مورد</div>`;
-  if(!list.length) html += '<div class="empty-log">موردی با این فیلتر پیدا نشد.</div>';
-  html += list.map(l=>{
-    const when = (l.date && l.time) ? `${l.date} - ${l.time}` : timeAgo(l.ts);
-    return `
-      <div class="log-item ${esc(l.action)} cat-${logCategory(l)}">
+  } else {
+    body.innerHTML = auditLog.map(l=>{
+      const when = (l.date && l.time) ? `${l.date} - ${l.time}` : timeAgo(l.ts);
+      return `
+      <div class="log-item ${l.action}">
         <div class="log-dot"></div>
         <div>
           <div class="log-text">${esc(l.text)}</div>
           <div class="log-meta">${esc(l.user)} · ${esc(when)}</div>
         </div>
       </div>`;
-  }).join('');
-  body.innerHTML = html;
-}
-function openLog(){
-  const tb = document.getElementById('logToolbar');
-  if(!auditLog.length){
-    tb.innerHTML = '';
-  } else {
-    const counts = {};
-    auditLog.forEach(l=>{ const c = logCategory(l); counts[c] = (counts[c]||0) + 1; });
-    const users = [...new Set(auditLog.map(l=>String(l.user||'')).filter(Boolean))];
-    if(logFilter.user && !users.includes(logFilter.user)) logFilter.user = '';
-    tb.innerHTML = `
-      <div class="log-chips">
-        <button type="button" class="log-chip ${logFilter.cat===''?'active':''}" data-cat="" onclick="setLogFilter('cat','')">همه<b>${auditLog.length.toLocaleString('en-US')}</b></button>
-        ${LOG_CATS.map(c=>`<button type="button" class="log-chip ${logFilter.cat===c.id?'active':''}" data-cat="${c.id}" onclick="setLogFilter('cat','${c.id}')">${c.label}<b>${(counts[c.id]||0).toLocaleString('en-US')}</b></button>`).join('')}
-      </div>
-      <div class="log-tools">
-        <select onchange="setLogFilter('user',this.value)">
-          <option value="">همه کاربران</option>
-          ${users.map(u=>`<option value="${esc(u).replace(/"/g,'&quot;')}" ${logFilter.user===u?'selected':''}>${esc(u)}</option>`).join('')}
-        </select>
-        <input placeholder="جستجو در لاگ (شماره سفارش، متن...)" value="${esc(logFilter.q).replace(/"/g,'&quot;')}" oninput="setLogFilter('q',this.value)">
-      </div>`;
+    }).join('');
   }
-  renderLogList();
   document.getElementById('logModalOverlay').classList.add('show');
 }
 
@@ -1429,7 +1323,7 @@ const ERROR_TYPE_LIST = ['بارمالی','بدون بارمالی'];
 const SELLER_RESULT_LIST = ['سفارش الحاقیه (ایجنت)','تیکت (بک آفیس)','آموزش (QC)'];
 const RESOLUTION_METHOD_LIST = ['تخفیف روی پکیجی یا سفارش','پرداخت کارت به کارت'];
 const SALARY_DEDUCTION_LIST = ['کسر شد ):','کسر نشد (:'];
-const LINE_LIST = ['خودرویی - ثالث','خودرویی - بدنه','غیرخودرویی'];
+const LINE_LIST = ['خودرویی - ثالث','خودرویی - بدنه','غیرخودرویی','تیم الحاقیه'];
 // چون توی شیت گاهی فاصله‌گذاری دور خط تیره فرق می‌کند (مثلاً «خودرویی-  بدنه»)،
 // این تابع همه‌ی حالت‌ها را به یک شکل استاندارد یکسان تبدیل می‌کند تا در فیلتر
 // دو گزینه‌ی ظاهراً یکسان تکراری نشوند.
@@ -1504,11 +1398,6 @@ function fillSelect(id, arr, allLabel){
   sel.innerHTML = `<option value="">${allLabel}</option>` + arr.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
   if(arr.includes(prev)) sel.value = prev;
 }
-function clearDateRange(){
-  document.getElementById('fDateFrom').value='';
-  document.getElementById('fDateTo').value='';
-  applyFilters();
-}
 function clearFilters(){
   document.getElementById('searchBox').value='';
   document.getElementById('fCompany').value='';
@@ -1551,8 +1440,7 @@ function applyFilters(){
     if(frm && (o.resolution_method||'').trim() !== frm) return false;
     if(ffb){
       const fbv = (o.feedback_status||'').trim();
-      if(ffb === '__none__'){ if(fbv === 'Yes' || fbv === 'No') return false; }   // نامشخص = بدون فیدبک
-      else if(fbv !== ffb) return false;
+      if(ffb==='none' ? fbv!=='' : fbv!==ffb) return false;
     }
     if(fdf || fdt){
       const od = parseDateField(o.date);
@@ -1569,7 +1457,7 @@ function applyFilters(){
       if(far==='30-' && !(amtM>30)) return false;
     }
     if(q){
-      const hay = [o.order_no,o.issue,o.seller_result,o.issuance_result,o.seller_ticket_no,o.packagei,o.agent,o.company,o.issuer_user].join(' ').toLowerCase();
+      const hay = [o.order_no,o.issue,o.seller_result,o.issuance_result,o.seller_ticket_no,o.packagei,o.agent,o.company,o.issuer_user,o.date].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -1630,6 +1518,26 @@ function renderStats(){
       <div class="stat-sub">از کل موارد فیلترشده</div>
     </div>
   `;
+}
+
+// چهار کارت کی‌پی‌آی به تفکیک «رشته بیمه»، درست بعد از کارت‌های کلی بالا
+function renderLineStats(){
+  const lines = ['خودرویی - ثالث','خودرویی - بدنه','غیرخودرویی','تیم الحاقیه'];
+  const icons = ['🚗','🚙','🏢','🔗'];
+  const colorClasses = ['orange','blue','green','purple'];
+  const grid = document.getElementById('lineStatsGrid');
+  grid.innerHTML = lines.map((line,i)=>{
+    const list = filtered.filter(o=>normLine(o.line)===line);
+    const amt = list.reduce((s,o)=>s+(Number(o.amount)||0),0);
+    const c = colorClasses[i];
+    return `
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-ic bg-${c} c-${c}">${icons[i]}</div></div>
+      <div class="stat-label">${esc(line)}</div>
+      <div class="stat-value">${list.length.toLocaleString('en-US')}</div>
+      <div class="stat-sub">${fmt(amt)} ریال</div>
+    </div>`;
+  }).join('');
 }
 
 function renderComposition(){
@@ -1749,7 +1657,7 @@ function renderTable(){
           <div class="row2">
             <div><h4>رشته بیمه</h4><div>${esc(normLine(o.line))||'—'}</div></div>
             <div><h4>نوع خطا</h4><div>${esc(o.error_type)||'—'}</div></div>
-            <div><h4>تاریخ روز</h4><div class="mono">${esc(o.date)||'—'}</div></div>
+            <div><h4>تاریخ</h4><div class="mono">${esc(o.date)||'—'}</div></div>
             <div><h4>نماینده بیمه</h4><div>${esc(o.agent)||'—'}</div></div>
             <div><h4>کاربر ثبت اولیه</h4><div>${esc(findInitialAddUser(o.order_no)) || '—'}</div></div>
             <div><h4>نحوه رفع مغایرت</h4><div>${esc(o.resolution_method)||'—'}</div></div>
@@ -1810,6 +1718,7 @@ function gotoPage(p){ currentPage = p; renderTable(); renderPagination(); }
 
 function renderAll(){
   renderStats();
+  renderLineStats();
   renderComposition();
   renderCharts();
   renderTable();
@@ -2344,7 +2253,7 @@ async function removeAgentOption(name){
 
 /* ---------------- CSV export ---------------- */
 function exportCSV(){
-  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ روز','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','نحوه رفع مغایرت','پکیجی یا سفارش (جهت تخفیف)','مبلغ مغایرت (ریال)','کاربر صدور','نوع خطا','کارشناس آموزش','وضعیت فیدبک','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
+  const headers = ['شماره سفارش','رشته بیمه','شرکت بیمه','نماینده بیمه','تاریخ','نوع مغایرت (شرح خلاصه)','کانال ورودی','شماره سفارش الحاقیه - تیکت','توضیحات و تشریح با جزئیات مغایرت (شرح کامل)','نحوه رفع مغایرت','پکیجی یا سفارش (جهت تخفیف)','مبلغ مغایرت (ریال)','کاربر صدور','نوع خطا','کارشناس آموزش','وضعیت فیدبک','توضیحات تیم آموزش','بررسی مدیریت','توضیحات مدیریت','کسر از حقوق','مبلغ کسر شده (ریال)','مبلغ باقی‌مانده جهت کسر (ریال)','وضعیت سفارش'];
   const rows = filtered.map(o=>[o.order_no,o.line,o.company,o.agent,o.date,o.issue,o.seller_result,o.seller_ticket_no,o.issuance_result,o.resolution_method,o.packagei,o.amount,o.issuer_user,o.error_type,o.training_specialist,o.feedback_status,o.training_notes,o.mgmt_review,o.mgmt_notes,o.salary_deduction,o.deducted_amount,(calcRemaining(o.amount,o.deducted_amount)||''),normStatus(o.status)]);
   const csv = '\uFEFF' + [headers, ...rows].map(r=>r.map(v=>{
     const s = (v==null?'':String(v)).replace(/"/g,'""');
